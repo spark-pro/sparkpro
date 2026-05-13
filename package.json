@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:setup": "ts-node --project tsconfig.json scripts/db-setup.ts",
+    "db:setup": "npx ts-node --project tsconfig.json scripts/db-setup.ts",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
