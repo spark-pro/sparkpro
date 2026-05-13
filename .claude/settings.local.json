@@ -14,7 +14,11 @@
       "Bash(node -e \"const b=require\\('bcryptjs'\\); b.hash\\('SparkAdmin@123',12\\).then\\(h=>console.log\\('HASH:'+h\\)\\)\")",
       "Bash(node:*)",
       "Bash(docker compose:*)",
-      "Bash(grep -rn \"rgba\\(8,\\\\|0F0C2E\\\\|linear-gradient.*#0[A-Fa-f0-9]\\\\{5\\\\}.*#0[A-Fa-f0-9]\" \"D:/Vicky Projects/Spark-Pro-2/Spark-Pro/src/components/pages/\")"
+      "Bash(grep -rn \"rgba\\(8,\\\\|0F0C2E\\\\|linear-gradient.*#0[A-Fa-f0-9]\\\\{5\\\\}.*#0[A-Fa-f0-9]\" \"D:/Vicky Projects/Spark-Pro-2/Spark-Pro/src/components/pages/\")",
+      "Bash(npm ls:*)",
+      "Bash(rm scripts/db-setup.ts)",
+      "Bash(rmdir scripts:*)",
+      "Bash(npm uninstall:*)"
     ]
   },
   "enabledPlugins": {

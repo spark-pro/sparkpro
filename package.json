@@ -6,7 +6,6 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "db:setup": "npx ts-node --project tsconfig.json scripts/db-setup.ts",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -86,7 +85,6 @@
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "tailwindcss": "4.1.12",
-    "ts-node": "^10.9.2",
     "typescript": "5.8.3"
   }
 }
