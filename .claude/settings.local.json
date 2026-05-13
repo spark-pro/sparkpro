@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(mkdir -p \"D:/Vicky Projects/Spark-Pro-2/Spark-Pro/src/app/api/jobs/[id]\")",
+      "Bash(mkdir -p \"D:/Vicky Projects/Spark-Pro-2/Spark-Pro/src/app/api/admin/jobs/[id]\")",
+      "Bash(mkdir -p \"D:/Vicky Projects/Spark-Pro-2/Spark-Pro/src/app/api/admin/applications/[id]\")",
+      "Bash(mkdir -p \"D:/Vicky Projects/Spark-Pro-2/Spark-Pro/src/app/api/admin/resume/[filename]\")",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(rm:*)",
+      "Bash(sed -i \"s/import { getDb } from '@\\\\/lib\\\\/db';/import { db } from '@\\\\/lib\\\\/db';/g\" src/app/api/jobs/route.ts src/app/api/jobs/[id]/route.ts src/app/api/applications/route.ts src/app/api/admin/jobs/route.ts src/app/api/admin/jobs/[id]/route.ts src/app/api/admin/applications/route.ts src/app/api/admin/stats/route.ts)",
+      "Bash(sed -i \"s/const db   = getDb\\(\\);//g; s/const db = getDb\\(\\);//g\" src/app/api/jobs/route.ts src/app/api/jobs/[id]/route.ts src/app/api/applications/route.ts src/app/api/admin/jobs/route.ts src/app/api/admin/jobs/[id]/route.ts src/app/api/admin/applications/route.ts src/app/api/admin/stats/route.ts)",
+      "Bash(node -e \"const b=require\\('bcryptjs'\\); b.hash\\('SparkAdmin@123',12\\).then\\(h=>console.log\\('HASH:'+h\\)\\)\")",
+      "Bash(node:*)",
+      "Bash(docker compose:*)",
+      "Bash(grep -rn \"rgba\\(8,\\\\|0F0C2E\\\\|linear-gradient.*#0[A-Fa-f0-9]\\\\{5\\\\}.*#0[A-Fa-f0-9]\" \"D:/Vicky Projects/Spark-Pro-2/Spark-Pro/src/components/pages/\")"
+    ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true
+  }
+}

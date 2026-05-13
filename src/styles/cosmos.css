@@ -1,0 +1,400 @@
+/* ============================================================
+   Spark Pro — Neon Cosmos Dark Design System
+   Brand Colors: Electric Blue #1AAAD9 · Lime Green #7DC52F
+   ============================================================ */
+
+/* ── Base ── */
+html, body {
+  background-color: var(--cs-bg);
+  color: var(--cs-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  font-family: 'Mulish', system-ui, -apple-system, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Exo 2', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Design Tokens (dark — default) ── */
+:root {
+  --cs-bg:           #0B0F1E;
+  --cs-bg-2:         #111827;
+  --cs-card:         #0D1525;
+  --cs-surface:      rgba(255, 255, 255, 0.06);
+  --cs-surface-2:    rgba(255, 255, 255, 0.10);
+  --cs-border:       rgba(255, 255, 255, 0.12);
+  --cs-border-2:     rgba(255, 255, 255, 0.20);
+
+  /* Brand colors — same in both themes */
+  --cs-blue:         #1A9DD4;
+  --cs-blue-dark:    #0C6088;
+  --cs-blue-light:   #4DC8E8;
+  --cs-teal:         #1EC8A8;
+  --cs-green:        #5EA020;
+  --cs-green-light:  #80CC30;
+
+  /* Gradients */
+  --cs-grad-main:  linear-gradient(135deg, #1282AE 0%, #0A917A 52%, #4E8A1A 100%);
+  --cs-grad-warm:  linear-gradient(135deg, #1EC8A8 0%, #80CC30 100%);
+  --cs-grad-cool:  linear-gradient(135deg, #0C6088 0%, #1A9DD4 100%);
+  --cs-grad-text:  linear-gradient(90deg, #4DC8E8 0%, #1EC8A8 48%, #80CC30 100%);
+
+  --cs-text:         #E8F4FF;
+  --cs-text-2:       #A0B8D8;
+  --cs-muted:        #92B8D8;
+  --cs-light:        #5A7898;
+  --cs-white:        #FFFFFF;
+  --cs-input-bg:     rgba(255, 255, 255, 0.04);
+  --cs-input-border: rgba(255, 255, 255, 0.07);
+  --cs-ghost-bg:     rgba(255, 255, 255, 0.05);
+  --cs-ghost-border: rgba(255, 255, 255, 0.10);
+  --cs-shadow:       rgba(0, 0, 0, 0.45);
+}
+
+/* ── Light mode overrides ── */
+html:not(.dark) {
+  --cs-bg:           #F2F5F9;
+  --cs-bg-2:         #E4EBF2;
+  --cs-card:         #FFFFFF;
+  --cs-surface:      rgba(255, 255, 255, 0.85);
+  --cs-surface-2:    rgba(255, 255, 255, 0.98);
+  --cs-border:       rgba(0, 0, 0, 0.10);
+  --cs-border-2:     rgba(0, 0, 0, 0.16);
+  --cs-text:         #0B1520;
+  --cs-text-2:       #1E3850;
+  --cs-muted:        #2D4A65;
+  --cs-light:        #4A6888;
+  --cs-input-bg:     rgba(0, 0, 0, 0.04);
+  --cs-input-border: rgba(0, 0, 0, 0.10);
+  --cs-ghost-bg:     rgba(0, 0, 0, 0.04);
+  --cs-ghost-border: rgba(0, 0, 0, 0.10);
+  --cs-shadow:       rgba(0, 0, 0, 0.10);
+}
+
+/* ── Always-dark sections (gradient CTAs, dark overlays) ── */
+/* Overrides light-mode text variables so text stays readable on dark backgrounds */
+.cs-on-dark {
+  --cs-text:   #E8F4FF;
+  --cs-text-2: #A0B8D8;
+  --cs-muted:  #92B8D8;
+  --cs-light:  #5A7898;
+}
+
+/* ── Gradient text utility ── */
+.cs-grad-text {
+  background: var(--cs-grad-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Section label ── */
+.cs-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Mulish', sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: var(--cs-grad-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Section eyebrow ── */
+.cs-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.cs-eyebrow::before {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 2px;
+  background: var(--cs-grad-main);
+  flex-shrink: 0;
+  border-radius: 1px;
+}
+
+/* ── Glass card ── */
+.cs-card {
+  background: var(--cs-surface);
+  border: 1px solid var(--cs-border);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.25s ease;
+}
+
+.cs-card:hover {
+  background: var(--cs-surface-2);
+  border-color: rgba(18, 130, 174, 0.2);
+  box-shadow: 0 0 32px rgba(18, 130, 174, 0.08), 0 12px 40px var(--cs-shadow);
+  transform: translateY(-3px);
+}
+
+/* ── Gradient border card ── */
+.cs-card-grad {
+  position: relative;
+  background: var(--cs-surface);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.25s ease, box-shadow 0.3s ease;
+}
+
+.cs-card-grad::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    rgba(26, 170, 217, 0.5) 0%,
+    rgba(13, 196, 168, 0.3) 50%,
+    rgba(125, 197, 47, 0.5) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.cs-card-grad:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 0 40px rgba(26, 170, 217, 0.12), 0 16px 48px var(--cs-shadow);
+}
+
+/* ── Icon box ── */
+.cs-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 0.75rem;
+  background: var(--cs-grad-main);
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(18, 130, 174, 0.25);
+}
+
+.cs-icon-box-sm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 0.625rem;
+  background: var(--cs-grad-main);
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(18, 130, 174, 0.2);
+}
+
+/* ── Buttons ── */
+.cs-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.875rem;
+  border-radius: 0.5rem;
+  font-family: 'Mulish', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.cs-btn-grad {
+  background: var(--cs-grad-main) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  box-shadow: 0 4px 24px rgba(18, 130, 174, 0.28) !important;
+}
+
+.cs-btn-grad:hover {
+  box-shadow: 0 6px 32px rgba(26, 170, 217, 0.6) !important;
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.cs-btn-glass {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #E8F4FF !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(8px);
+}
+
+.cs-btn-glass:hover {
+  background: rgba(18, 130, 174, 0.08) !important;
+  border-color: rgba(18, 130, 174, 0.28) !important;
+}
+
+.cs-btn-white {
+  background: #FFFFFF !important;
+  color: #060810 !important;
+  border: none !important;
+  font-weight: 700 !important;
+}
+
+.cs-btn-white:hover {
+  background: #E8F4FF !important;
+  box-shadow: 0 4px 24px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ── Navigation ── */
+.cs-nav-link {
+  font-family: 'Mulish', sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--cs-muted);
+  text-decoration: none;
+  position: relative;
+  padding-bottom: 2px;
+  transition: color 0.2s ease;
+}
+
+.cs-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--cs-grad-main);
+  border-radius: 1px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+
+.cs-nav-link:hover { color: var(--cs-text); }
+.cs-nav-link:hover::after,
+.cs-nav-link.active::after { transform: scaleX(1); }
+.cs-nav-link.active { color: var(--cs-text); font-weight: 700; }
+
+/* ── Footer links ── */
+.cs-footer-link {
+  font-family: 'Mulish', sans-serif;
+  font-size: 0.875rem;
+  color: var(--cs-text-2);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.cs-footer-link:hover { color: var(--cs-text); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--cs-bg); }
+::-webkit-scrollbar-thumb { background: rgba(18, 130, 174, 0.28); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cs-blue); }
+
+/* ── Mobile menu ── */
+.cs-mobile-menu {
+  background: rgba(11, 15, 30, 0.98);
+  border-top: 1px solid var(--cs-border);
+  backdrop-filter: blur(20px);
+}
+
+/* ── Back to top ── */
+.cs-back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--cs-grad-main);
+  color: #FFFFFF;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(26, 170, 217, 0.5);
+  z-index: 40;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.cs-back-to-top:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 32px rgba(26, 170, 217, 0.65);
+}
+
+/* ── Value pill ── */
+.cs-value-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.625rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+.cs-value-pill:hover {
+  background: rgba(26, 170, 217, 0.07);
+  border-color: rgba(26, 170, 217, 0.2);
+}
+
+/* ── Stat card ── */
+.cs-stat {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+/* ── Divider ── */
+.cs-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(18, 130, 174, 0.2), rgba(125, 197, 47, 0.3), transparent);
+}
+
+/* ── Check item ── */
+.cs-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  font-size: 0.9375rem;
+  color: var(--cs-muted);
+  line-height: 1.6;
+}
+
+/* ── Step number ── */
+.cs-step-num {
+  font-family: 'Exo 2', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 900;
+  background: var(--cs-grad-main);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0.25;
+  line-height: 1;
+  user-select: none;
+}
+
+/* ── Glow orb ── */
+.cs-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
