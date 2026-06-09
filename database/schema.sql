@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS jobs (
   requirements JSONB        NOT NULL DEFAULT '[]',
   benefits     JSONB                 DEFAULT '[]',
   is_active    BOOLEAN      NOT NULL DEFAULT TRUE,
-  created_at   TIMESTAMP             DEFAULT NOW(),
-  updated_at   TIMESTAMP             DEFAULT NOW()
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ          DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS applications (
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS applications (
   resume_mimetype      VARCHAR(100),
   status               application_status NOT NULL DEFAULT 'pending',
   admin_notes          TEXT,
-  created_at           TIMESTAMP DEFAULT NOW()
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_jobs_active   ON jobs(is_active);

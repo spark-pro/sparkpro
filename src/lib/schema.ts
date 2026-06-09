@@ -24,13 +24,13 @@ export const jobs = pgTable('jobs', {
   requirements: jsonb('requirements').$type<string[]>().notNull().default([]),
   benefits:     jsonb('benefits').$type<string[]>().default([]),
   isActive:     boolean('is_active').notNull().default(true),
-  createdAt:    timestamp('created_at').defaultNow(),
-  updatedAt:    timestamp('updated_at').defaultNow().$onUpdateFn(() => new Date()),
+  createdAt:    timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:    timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdateFn(() => new Date()),
 });
 
 export const applications = pgTable('applications', {
   id:                 serial('id').primaryKey(),
-  jobId:              integer('job_id').notNull(),
+  jobId:              integer('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
   fullName:           varchar('full_name',            { length: 100 }).notNull(),
   email:              varchar('email',                { length: 255 }).notNull(),
   phone:              varchar('phone',                { length: 25  }).notNull(),
@@ -40,7 +40,7 @@ export const applications = pgTable('applications', {
   resumeMimetype:     varchar('resume_mimetype',      { length: 100 }),
   status:             applicationStatusEnum('status').notNull().default('pending'),
   adminNotes:         text('admin_notes'),
-  createdAt:          timestamp('created_at').defaultNow(),
+  createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type Job            = typeof jobs.$inferSelect;
