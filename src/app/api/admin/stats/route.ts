@@ -9,8 +9,6 @@ export async function GET(request: Request) {
   if (err) return err;
 
   try {
-    
-
     const [
       [{ total_jobs }],
       [{ active_jobs }],
@@ -18,11 +16,11 @@ export async function GET(request: Request) {
       [{ pending_applications }],
       [{ shortlisted }],
     ] = await Promise.all([
-      db.select({ total_jobs:            count() }).from(jobs),
-      db.select({ active_jobs:           count() }).from(jobs).where(eq(jobs.isActive, 1)),
-      db.select({ total_applications:    count() }).from(applications),
-      db.select({ pending_applications:  count() }).from(applications).where(eq(applications.status, 'pending')),
-      db.select({ shortlisted:           count() }).from(applications).where(eq(applications.status, 'shortlisted')),
+      db.select({ total_jobs:           count() }).from(jobs),
+      db.select({ active_jobs:          count() }).from(jobs).where(eq(jobs.isActive, true)),
+      db.select({ total_applications:   count() }).from(applications),
+      db.select({ pending_applications: count() }).from(applications).where(eq(applications.status, 'pending')),
+      db.select({ shortlisted:          count() }).from(applications).where(eq(applications.status, 'shortlisted')),
     ]);
 
     return NextResponse.json({ stats: { total_jobs, active_jobs, total_applications, pending_applications, shortlisted } });
