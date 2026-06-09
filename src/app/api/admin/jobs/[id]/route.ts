@@ -16,18 +16,10 @@ export async function GET(
   if (isNaN(jobId)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
   try {
-    
     const rows = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
     if (!rows.length) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const job = rows[0];
-    return NextResponse.json({
-      job: {
-        ...job,
-        requirements: safeParseJSON(job.requirements),
-        benefits:     safeParseJSON(job.benefits),
-      },
-    });
+    return NextResponse.json({ job: rows[0] });
   } catch (e) {
     console.error('[Admin] GET /jobs/[id]:', e);
     return NextResponse.json({ error: 'Failed to fetch job' }, { status: 500 });
@@ -57,9 +49,9 @@ export async function PUT(
       title, location, experience,
       salaryRange:  salary_range || null,
       description,
-      requirements: JSON.stringify(Array.isArray(requirements) ? requirements : []),
-      benefits:     JSON.stringify(Array.isArray(benefits)     ? benefits     : []),
-      isActive:     is_active ? 1 : 0,
+      requirements: Array.isArray(requirements) ? requirements : [],
+      benefits:     Array.isArray(benefits)     ? benefits     : [],
+      isActive:     Boolean(is_active),
     }).where(eq(jobs.id, jobId));
 
     return NextResponse.json({ message: 'Job updated' });
@@ -81,16 +73,10 @@ export async function DELETE(
   if (isNaN(jobId)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
   try {
-    
     await db.delete(jobs).where(eq(jobs.id, jobId));
     return NextResponse.json({ message: 'Job deleted' });
   } catch (e) {
     console.error('[Admin] DELETE /jobs/[id]:', e);
     return NextResponse.json({ error: 'Failed to delete job' }, { status: 500 });
   }
-}
-
-function safeParseJSON(val: string | null | undefined): string[] {
-  if (!val) return [];
-  try { return JSON.parse(val); } catch { return []; }
 }

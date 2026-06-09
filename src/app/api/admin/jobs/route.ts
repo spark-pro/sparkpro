@@ -9,7 +9,6 @@ export async function GET(request: Request) {
   if (err) return err;
 
   try {
-    
     const rows = await db
       .select({
         id:               jobs.id,
@@ -50,12 +49,12 @@ export async function POST(request: Request) {
       title, location, experience,
       salaryRange:  salary_range || null,
       description,
-      requirements: JSON.stringify(Array.isArray(requirements) ? requirements : []),
-      benefits:     JSON.stringify(Array.isArray(benefits)     ? benefits     : []),
-      isActive:     is_active ? 1 : 0,
-    });
+      requirements: Array.isArray(requirements) ? requirements : [],
+      benefits:     Array.isArray(benefits)     ? benefits     : [],
+      isActive:     Boolean(is_active),
+    }).returning({ id: jobs.id });
 
-    return NextResponse.json({ message: 'Job created', id: result[0].insertId }, { status: 201 });
+    return NextResponse.json({ message: 'Job created', id: result[0].id }, { status: 201 });
   } catch (e) {
     console.error('[Admin] POST /jobs:', e);
     return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });
