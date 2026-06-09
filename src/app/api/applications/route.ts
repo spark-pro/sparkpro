@@ -29,11 +29,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
     }
 
-    
-    const job  = await db
+    const job = await db
       .select({ id: jobs.id })
       .from(jobs)
-      .where(and(eq(jobs.id, jobId), eq(jobs.isActive, 1)))
+      .where(and(eq(jobs.id, jobId), eq(jobs.isActive, true)))
       .limit(1);
 
     if (!job.length) {

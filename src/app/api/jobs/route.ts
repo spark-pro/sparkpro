@@ -5,7 +5,6 @@ import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
   try {
-    
     const rows = await db
       .select({
         id:          jobs.id,
@@ -17,7 +16,7 @@ export async function GET() {
         createdAt:   jobs.createdAt,
       })
       .from(jobs)
-      .where(eq(jobs.isActive, 1))
+      .where(eq(jobs.isActive, true))
       .orderBy(desc(jobs.createdAt));
 
     return NextResponse.json({ jobs: rows });

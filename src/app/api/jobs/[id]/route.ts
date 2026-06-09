@@ -12,29 +12,17 @@ export async function GET(
   if (isNaN(jobId)) return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 });
 
   try {
-    
     const rows = await db
       .select()
       .from(jobs)
-      .where(and(eq(jobs.id, jobId), eq(jobs.isActive, 1)))
+      .where(and(eq(jobs.id, jobId), eq(jobs.isActive, true)))
       .limit(1);
 
     if (!rows.length) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
 
-    const job = rows[0];
-    const parsed = {
-      ...job,
-      requirements: safeParseJSON(job.requirements),
-      benefits:     safeParseJSON(job.benefits),
-    };
-    return NextResponse.json({ job: parsed });
+    return NextResponse.json({ job: rows[0] });
   } catch (err) {
     console.error('[API] GET /api/jobs/[id]:', err);
     return NextResponse.json({ error: 'Failed to fetch job' }, { status: 500 });
   }
-}
-
-function safeParseJSON(val: string | null | undefined): string[] {
-  if (!val) return [];
-  try { return JSON.parse(val); } catch { return []; }
 }
