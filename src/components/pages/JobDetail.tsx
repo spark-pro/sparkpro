@@ -12,11 +12,11 @@ interface Job {
   title: string;
   location: string;
   experience: string;
-  salary_range: string | null;
+  salaryRange: string | null;
   description: string;
   requirements: string[];
   benefits: string[];
-  created_at: string;
+  createdAt: string;
 }
 
 interface AppForm {
@@ -75,7 +75,7 @@ export function JobDetail({ jobId }: { jobId: number }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                 <TagItem icon={MapPin}    text={job.location} />
                 <TagItem icon={Clock}     text={job.experience} highlight />
-                {job.salary_range && <TagItem icon={DollarSign} text={job.salary_range} />}
+                {job.salaryRange && <TagItem icon={DollarSign} text={job.salaryRange} />}
               </div>
             </div>
 

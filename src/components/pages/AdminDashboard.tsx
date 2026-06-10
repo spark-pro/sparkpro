@@ -606,7 +606,7 @@ function AppDetailModal({ app, onClose, onStatusChange }: { app: Application; on
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem', marginBottom: '1.5rem' }}>
           <InfoBlock label="Email" value={app.email} />
           <InfoBlock label="Phone" value={app.phone} />
         </div>
