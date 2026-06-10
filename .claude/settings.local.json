@@ -18,7 +18,11 @@
       "Bash(npm ls:*)",
       "Bash(rm scripts/db-setup.ts)",
       "Bash(rmdir scripts:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   },
   "enabledPlugins": {

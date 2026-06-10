@@ -53,8 +53,10 @@ export async function POST(request: Request) {
       if (file.size > MAX_SIZE) {
         return NextResponse.json({ error: 'Resume must be under 5 MB' }, { status: 400 });
       }
-      const ext      = path.extname(file.name) || '.pdf';
-      const blobName = `resumes/${uuidv4()}${ext}`;
+      const ext       = path.extname(file.name) || '.pdf';
+      const safeName  = fullName.replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'applicant';
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const blobName  = `resumes/${safeName}_${timestamp}_${uuidv4().slice(0, 8)}${ext}`;
       const { url }  = await put(blobName, Buffer.from(await file.arrayBuffer()), {
         access: 'private',
         contentType: file.type,
