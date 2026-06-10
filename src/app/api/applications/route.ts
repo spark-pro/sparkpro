@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { jobs, applications } from '@/lib/schema';
 import { and, eq } from 'drizzle-orm';
-import { writeFile, mkdir } from 'fs/promises';
+import { put } from '@vercel/blob';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -53,11 +53,13 @@ export async function POST(request: Request) {
       if (file.size > MAX_SIZE) {
         return NextResponse.json({ error: 'Resume must be under 5 MB' }, { status: 400 });
       }
-      const ext       = path.extname(file.name) || '.pdf';
-      resumeFilename  = `${uuidv4()}${ext}`;
-      const uploadDir = path.join(process.cwd(), 'private', 'resumes');
-      await mkdir(uploadDir, { recursive: true });
-      await writeFile(path.join(uploadDir, resumeFilename), Buffer.from(await file.arrayBuffer()));
+      const ext      = path.extname(file.name) || '.pdf';
+      const blobName = `resumes/${uuidv4()}${ext}`;
+      const { url }  = await put(blobName, Buffer.from(await file.arrayBuffer()), {
+        access: 'public',
+        contentType: file.type,
+      });
+      resumeFilename     = url;
       resumeOriginalName = file.name;
       resumeSize         = file.size;
       resumeMimetype     = file.type;

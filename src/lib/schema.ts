@@ -34,7 +34,7 @@ export const applications = pgTable('applications', {
   fullName:           varchar('full_name',            { length: 100 }).notNull(),
   email:              varchar('email',                { length: 255 }).notNull(),
   phone:              varchar('phone',                { length: 25  }).notNull(),
-  resumeFilename:     varchar('resume_filename',      { length: 255 }),
+  resumeFilename:     text('resume_filename'),
   resumeOriginalName: varchar('resume_original_name', { length: 255 }),
   resumeSize:         integer('resume_size'),
   resumeMimetype:     varchar('resume_mimetype',      { length: 100 }),
