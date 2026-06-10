@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, MapPin, Clock, CheckCircle2,
-  Upload, X, Loader2, ChevronRight, DollarSign, Briefcase,
+  Upload, X, Loader2, ChevronRight, IndianRupee, Briefcase,
 } from 'lucide-react';
 
 interface Job {
@@ -75,7 +75,7 @@ export function JobDetail({ jobId }: { jobId: number }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
                 <TagItem icon={MapPin}    text={job.location} />
                 <TagItem icon={Clock}     text={job.experience} highlight />
-                {job.salaryRange && <TagItem icon={DollarSign} text={job.salaryRange} />}
+                {job.salaryRange && <TagItem icon={IndianRupee} text={job.salaryRange} />}
               </div>
             </div>
 

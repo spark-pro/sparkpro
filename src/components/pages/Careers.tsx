@@ -9,8 +9,8 @@ interface Job {
   title: string;
   location: string;
   experience: string;
-  salary_range: string | null;
-  created_at: string;
+  salaryRange: string | null;
+  createdAt: string;
 }
 
 export function Careers() {
@@ -181,7 +181,7 @@ function JobRow({ job, index }: { job: Job; index: number }) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
               <MetaChip icon={MapPin}    text={job.location} />
               <MetaChip icon={Briefcase} text={job.experience} />
-              {job.salary_range && <MetaChip icon={TrendingUp} text={job.salary_range} />}
+              {job.salaryRange && <MetaChip icon={TrendingUp} text={job.salaryRange} />}
             </div>
           </div>
         </div>
