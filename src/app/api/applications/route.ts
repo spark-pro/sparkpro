@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       const ext      = path.extname(file.name) || '.pdf';
       const blobName = `resumes/${uuidv4()}${ext}`;
       const { url }  = await put(blobName, Buffer.from(await file.arrayBuffer()), {
-        access: 'public',
+        access: 'private',
         contentType: file.type,
       });
       resumeFilename     = url;

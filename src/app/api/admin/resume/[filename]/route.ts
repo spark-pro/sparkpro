@@ -1,8 +1,7 @@
 import { requireAdmin } from '@/lib/auth';
-import { readFile } from 'fs/promises';
 import path from 'path';
 
-// GET /api/admin/resume/[filename] — serve resume file (admin only)
+// GET /api/admin/resume/[filename] — proxy resume from Vercel Blob (admin only)
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ filename: string }> }
@@ -12,29 +11,41 @@ export async function GET(
 
   const { filename } = await params;
 
-  // Sanitise: only allow uuid-based filenames, block path traversal
-  if (!filename || !/^[a-f0-9\-]+\.(pdf|doc|docx)$/i.test(filename)) {
-    return new Response(JSON.stringify({ error: 'Invalid filename' }), {
-      status: 400,
+  // filename is either a UUID slug (legacy local) or a URL-encoded blob URL
+  const decoded = decodeURIComponent(filename);
+  const isBlobUrl = decoded.startsWith('https://');
+
+  if (!isBlobUrl) {
+    // Legacy local file — no longer supported on Vercel
+    return new Response(JSON.stringify({ error: 'File not found' }), {
+      status: 404,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
   try {
-    const filePath = path.join(process.cwd(), 'private', 'resumes', filename);
-    const buffer   = await readFile(filePath);
+    const blobRes = await fetch(decoded, {
+      headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
+    });
 
-    const ext = path.extname(filename).toLowerCase();
+    if (!blobRes.ok) {
+      return new Response(JSON.stringify({ error: 'File not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const ext = path.extname(new URL(decoded).pathname).toLowerCase();
     const contentType =
       ext === '.pdf'  ? 'application/pdf' :
       ext === '.docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
                         'application/msword';
 
-    return new Response(buffer, {
+    return new Response(blobRes.body, {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Disposition': `attachment; filename="${path.basename(new URL(decoded).pathname)}"`,
         'Cache-Control': 'no-store',
       },
     });

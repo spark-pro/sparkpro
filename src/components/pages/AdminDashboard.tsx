@@ -500,7 +500,7 @@ export function AdminDashboard() {
                             </td>
                             <td style={tdStyle}>
                               {app.resumeFilename
-                                ? <a href={app.resumeFilename} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#4DC8E8', fontSize: '0.8125rem', textDecoration: 'none' }}><Download size={13} /> Download</a>
+                                ? <a href={`/api/admin/resume/${encodeURIComponent(app.resumeFilename)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#4DC8E8', fontSize: '0.8125rem', textDecoration: 'none' }}><Download size={13} /> Download</a>
                                 : <span style={{ color: 'var(--cs-muted)', fontSize: '0.8125rem' }}>—</span>
                               }
                             </td>
@@ -599,7 +599,7 @@ function AppDetailModal({ app, onClose, onStatusChange }: { app: Application; on
             </select>
           </div>
           {app.resumeFilename && (
-            <a href={app.resumeFilename} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.3rem 0.875rem', background: 'rgba(77,200,232,0.1)', border: '1px solid rgba(77,200,232,0.25)', borderRadius: '100px', color: '#4DC8E8', fontFamily: "'Mulish', sans-serif", fontSize: '0.8125rem', fontWeight: 700, textDecoration: 'none' }}>
+            <a href={`/api/admin/resume/${encodeURIComponent(app.resumeFilename)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.3rem 0.875rem', background: 'rgba(77,200,232,0.1)', border: '1px solid rgba(77,200,232,0.25)', borderRadius: '100px', color: '#4DC8E8', fontFamily: "'Mulish', sans-serif", fontSize: '0.8125rem', fontWeight: 700, textDecoration: 'none' }}>
               <Download size={13} /> Download Resume
               {app.resumeOriginalName && <span style={{ fontWeight: 400, color: 'var(--cs-muted)' }}>({app.resumeOriginalName})</span>}
             </a>
