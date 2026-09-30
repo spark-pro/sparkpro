@@ -14,7 +14,7 @@ npm run build    # drizzle-kit push (sync schema to DB) THEN next build
 npm run start    # production server (next start)
 ```
 
-No test runner or linter is configured. `npm run build` is the de-facto type/integration check — note it pushes the Drizzle schema to whatever DB `POSTGRES_URL`/`DATABASE_URL` points at before building, so don't run it casually against production.
+No test runner or linter is configured. `npm run build` is the de-facto type/integration check — note it pushes the Drizzle schema to whatever DB `SPARK_PRO_DATABASE_URL` points at before building, so don't run it casually against production.
 
 Drizzle workflow: `schema.ts` is the source of truth. `drizzle-kit push` (run by `build`) syncs it directly; `drizzle-kit generate` writes SQL migrations into `database/migrations/`. Config: `drizzle.config.ts` (reads `.env.local`).
 
@@ -41,4 +41,4 @@ Drizzle workflow: `schema.ts` is the source of truth. `drizzle-kit push` (run by
 
 ## Environment
 
-Set in `.env.local` (gitignored): `POSTGRES_URL` (or `DATABASE_URL`), `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and `BLOB_READ_WRITE_TOKEN` (Vercel Blob). The DB connection requires SSL (`ssl: 'require'`).
+Set in `.env.local` (gitignored): `SPARK_PRO_DATABASE_URL`, `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and `BLOB_READ_WRITE_TOKEN` (Vercel Blob). The DB connection requires SSL (`ssl: 'require'`).

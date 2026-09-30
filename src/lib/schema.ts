@@ -1,20 +1,21 @@
 import {
-  pgTable,
+  pgSchema,
   serial,
   varchar,
   text,
   boolean,
   integer,
   timestamp,
-  pgEnum,
   jsonb,
 } from 'drizzle-orm/pg-core';
 
-export const applicationStatusEnum = pgEnum('application_status', [
+export const sparkSchema = pgSchema('spark');
+
+export const applicationStatusEnum = sparkSchema.enum('application_status', [
   'pending', 'reviewed', 'shortlisted', 'rejected',
 ]);
 
-export const jobs = pgTable('jobs', {
+export const jobs = sparkSchema.table('jobs', {
   id:           serial('id').primaryKey(),
   title:        varchar('title',        { length: 255 }).notNull(),
   location:     varchar('location',     { length: 150 }).notNull(),
@@ -28,7 +29,7 @@ export const jobs = pgTable('jobs', {
   updatedAt:    timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdateFn(() => new Date()),
 });
 
-export const applications = pgTable('applications', {
+export const applications = sparkSchema.table('applications', {
   id:                 serial('id').primaryKey(),
   jobId:              integer('job_id').notNull().references(() => jobs.id, { onDelete: 'cascade' }),
   fullName:           varchar('full_name',            { length: 100 }).notNull(),
@@ -47,3 +48,23 @@ export type Job            = typeof jobs.$inferSelect;
 export type NewJob         = typeof jobs.$inferInsert;
 export type Application    = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;
+
+// "Request Your HR Independence Check" form submissions (Contact page).
+// Dropdown answers are stored as plain text (the option label the visitor saw).
+export const hrChecks = sparkSchema.table('hr_checks', {
+  id:               serial('id').primaryKey(),
+  name:             varchar('name',              { length: 150 }).notNull(),
+  company:          varchar('company',           { length: 200 }).notNull(),
+  companySize:      text('company_size').notNull(),
+  email:            varchar('email',             { length: 255 }).notNull(),
+  phone:            varchar('phone',             { length: 25 }),
+  businessStage:    text('business_stage').notNull(),
+  primaryChallenge: text('primary_challenge').notNull(),
+  message:          text('message'),
+  status:           varchar('status',            { length: 20 }).notNull().default('new'),
+  adminNotes:       text('admin_notes'),
+  createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type HrCheck    = typeof hrChecks.$inferSelect;
+export type NewHrCheck = typeof hrChecks.$inferInsert;

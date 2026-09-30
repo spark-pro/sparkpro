@@ -50,18 +50,18 @@ export function JobDetail({ jobId }: { jobId: number }) {
     <>
       <div style={{ background: 'var(--cs-bg)', minHeight: '100vh' }}>
         {/* ── Top gradient bar ─────────────────────────────────── */}
-        <div style={{ height: '2px', background: 'linear-gradient(90deg, #1282AE, #1EC8A8, #80CC30)' }} />
+        <div style={{ height: '2px', background: 'linear-gradient(90deg, #2B7FFF, #60A5FA, #60A5FA)' }} />
 
-        <div style={{ maxWidth: '960px', margin: '0 auto', padding: '2.5rem 1.5rem 5rem' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto', padding: '7rem 1.5rem 5rem' }}>
           {/* Back */}
           <Link href="/careers" style={{
             display: 'inline-flex', alignItems: 'center', gap: '0.375rem',
-            color: '#6B8CAE', fontFamily: "'Mulish', sans-serif", fontSize: '0.875rem',
+            color: 'rgba(226,232,244,0.55)', fontFamily: "'Inter', sans-serif", fontSize: '0.875rem',
             textDecoration: 'none', marginBottom: '2rem',
             transition: 'color 0.2s',
           }}
-            onMouseEnter={e => e.currentTarget.style.color = '#4DC8E8'}
-            onMouseLeave={e => e.currentTarget.style.color = '#6B8CAE'}
+            onMouseEnter={e => e.currentTarget.style.color = '#60A5FA'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(226,232,244,0.55)'}
           >
             <ArrowLeft size={15} /> Back to Careers
           </Link>
@@ -69,7 +69,7 @@ export function JobDetail({ jobId }: { jobId: number }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1.5rem', alignItems: 'start', flexWrap: 'wrap' }}>
             {/* Left: header */}
             <div>
-              <h1 style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', color: 'var(--cs-text)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+              <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: 'clamp(1.5rem, 4vw, 2.25rem)', color: 'var(--cs-text)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
                 {job.title}
               </h1>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
@@ -85,12 +85,12 @@ export function JobDetail({ jobId }: { jobId: number }) {
               style={{
                 padding: '0.75rem 1.75rem',
                 borderRadius: '0.6rem',
-                background: 'linear-gradient(135deg, #1282AE 0%, #0A917A 52%, #4E8A1A 100%)',
+                background: '#2B7FFF',
                 color: '#fff',
-                fontFamily: "'Mulish', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: 700, fontSize: '0.9375rem',
                 border: 'none', cursor: 'pointer',
-                boxShadow: '0 4px 20px rgba(18,130,174,0.3)',
+                boxShadow: '0 4px 20px rgba(43,127,255,0.3)',
                 whiteSpace: 'nowrap',
                 transition: 'filter 0.2s, transform 0.2s',
                 display: 'flex', alignItems: 'center', gap: '0.5rem',
@@ -105,7 +105,7 @@ export function JobDetail({ jobId }: { jobId: number }) {
           {/* ── Content ─────────────────────────────────────────── */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', marginTop: '2.5rem' }}>
             <Section title="About This Role">
-              <p style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.9375rem', color: 'var(--cs-text-2)', lineHeight: 1.8 }}>{job.description}</p>
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.9375rem', color: 'var(--cs-text-2)', lineHeight: 1.8 }}>{job.description}</p>
             </Section>
 
             {job.requirements?.length > 0 && (
@@ -124,13 +124,13 @@ export function JobDetail({ jobId }: { jobId: number }) {
           {/* Bottom CTA */}
           <div style={{
             marginTop: '3rem', padding: '2rem', borderRadius: '1rem', textAlign: 'center',
-            background: 'linear-gradient(135deg, rgba(18,130,174,0.08), rgba(10,145,122,0.06))',
-            border: '1px solid rgba(18,130,174,0.15)',
+            background: 'linear-gradient(135deg, rgba(43,127,255,0.08), rgba(26,106,255,0.06))',
+            border: '1px solid rgba(43,127,255,0.15)',
           }}>
-            <h3 style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '1.25rem', color: 'var(--cs-text)', marginBottom: '0.5rem' }}>
+            <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '1.25rem', color: 'var(--cs-text)', marginBottom: '0.5rem' }}>
               Ready to join us?
             </h3>
-            <p style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.9rem', color: '#6B8CAE', marginBottom: '1.25rem' }}>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.9rem', color: 'rgba(226,232,244,0.55)', marginBottom: '1.25rem' }}>
               Submit your application and we&#39;ll get back to you within 3-5 business days.
             </p>
             <button
@@ -138,12 +138,12 @@ export function JobDetail({ jobId }: { jobId: number }) {
               style={{
                 padding: '0.75rem 2rem',
                 borderRadius: '0.6rem',
-                background: 'linear-gradient(135deg, #1282AE 0%, #0A917A 52%, #4E8A1A 100%)',
+                background: '#2B7FFF',
                 color: '#fff',
-                fontFamily: "'Mulish', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: 700, fontSize: '0.9375rem',
                 border: 'none', cursor: 'pointer',
-                boxShadow: '0 4px 20px rgba(18,130,174,0.3)',
+                boxShadow: '0 4px 20px rgba(43,127,255,0.3)',
               }}
             >
               Apply for This Position
@@ -215,10 +215,41 @@ function ApplicationModal({ job, onClose }: { job: Job; onClose: () => void }) {
     }
   };
 
+  // Closing the success popup refreshes the page.
+  const closeSuccess = () => window.location.reload();
+
+  if (success) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(2,8,18,0.88)', backdropFilter: 'blur(8px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+      }}
+        onClick={e => { if (e.target === e.currentTarget) closeSuccess(); }}
+        role="dialog" aria-modal="true"
+      >
+        <div style={{
+          position: 'relative', width: '100%', maxWidth: '440px',
+          background: '#0B1628', border: '1px solid rgba(43,127,255,0.25)',
+          borderRadius: '1.25rem', boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(43,127,255,0.12)',
+        }}>
+          <button onClick={closeSuccess} aria-label="Close" style={{
+            position: 'absolute', top: '1rem', right: '1rem',
+            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '0.5rem', padding: '0.4rem', cursor: 'pointer', color: 'var(--cs-text-2)', lineHeight: 0,
+          }}>
+            <X size={18} />
+          </button>
+          <SuccessState onClose={closeSuccess} jobTitle={job.title} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1000,
-      background: 'rgba(4,8,18,0.88)',
+      background: 'rgba(2,8,18,0.88)',
       backdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
       padding: '2rem 1rem',
@@ -228,7 +259,7 @@ function ApplicationModal({ job, onClose }: { job: Job; onClose: () => void }) {
     >
       <div style={{
         width: '100%', maxWidth: '680px',
-        background: '#0F1628',
+        background: '#0B1628',
         border: '1px solid rgba(255,255,255,0.08)',
         borderRadius: '1.25rem',
         overflow: 'hidden',
@@ -239,13 +270,13 @@ function ApplicationModal({ job, onClose }: { job: Job; onClose: () => void }) {
           padding: '1.5rem 1.75rem',
           borderBottom: '1px solid rgba(255,255,255,0.07)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'rgba(18,130,174,0.05)',
+          background: 'rgba(43,127,255,0.05)',
         }}>
           <div>
-            <div style={{ fontSize: '0.6875rem', fontFamily: "'Mulish', sans-serif", fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#1EC8A8', marginBottom: '0.25rem' }}>
+            <div style={{ fontSize: '0.6875rem', fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#60A5FA', marginBottom: '0.25rem' }}>
               Apply Now
             </div>
-            <h2 style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '1.125rem', color: 'var(--cs-text)', margin: 0 }}>
+            <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '1.125rem', color: 'var(--cs-text)', margin: 0 }}>
               {job.title}
             </h2>
           </div>
@@ -260,7 +291,7 @@ function ApplicationModal({ job, onClose }: { job: Job; onClose: () => void }) {
           <form onSubmit={handleSubmit} style={{ padding: '1.75rem' }}>
             {/* Error banner */}
             {error && (
-              <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem', color: '#F87171', fontFamily: "'Mulish', sans-serif", fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+              <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem', color: '#F87171', fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', marginBottom: '1.25rem' }}>
                 {error}
               </div>
             )}
@@ -289,33 +320,33 @@ function ApplicationModal({ job, onClose }: { job: Job; onClose: () => void }) {
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 style={{
-                  border: `2px dashed ${dragOver ? 'rgba(18,130,174,0.6)' : resume ? 'rgba(30,200,168,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                  border: `2px dashed ${dragOver ? 'rgba(43,127,255,0.6)' : resume ? 'rgba(96,165,250,0.4)' : 'rgba(255,255,255,0.1)'}`,
                   borderRadius: '0.75rem',
                   padding: '2rem',
                   textAlign: 'center',
                   cursor: 'pointer',
-                  background: dragOver ? 'rgba(18,130,174,0.05)' : resume ? 'rgba(30,200,168,0.04)' : 'rgba(255,255,255,0.02)',
+                  background: dragOver ? 'rgba(43,127,255,0.05)' : resume ? 'rgba(96,165,250,0.04)' : 'rgba(255,255,255,0.02)',
                   transition: 'all 0.2s',
                 }}
               >
                 {resume ? (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
-                    <CheckCircle2 size={22} style={{ color: '#1EC8A8' }} />
+                    <CheckCircle2 size={22} style={{ color: '#60A5FA' }} />
                     <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontFamily: "'Mulish', sans-serif", fontWeight: 700, fontSize: '0.875rem', color: 'var(--cs-text)' }}>{resume.name}</div>
-                      <div style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.75rem', color: '#6B8CAE' }}>{(resume.size / 1024).toFixed(0)} KB — click to change</div>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.875rem', color: 'var(--cs-text)' }}>{resume.name}</div>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.75rem', color: 'rgba(226,232,244,0.55)' }}>{(resume.size / 1024).toFixed(0)} KB — click to change</div>
                     </div>
-                    <button type="button" onClick={e => { e.stopPropagation(); setResume(null); }} style={{ background: 'none', border: 'none', color: '#6B8CAE', cursor: 'pointer', lineHeight: 0 }}>
+                    <button type="button" onClick={e => { e.stopPropagation(); setResume(null); }} style={{ background: 'none', border: 'none', color: 'rgba(226,232,244,0.55)', cursor: 'pointer', lineHeight: 0 }}>
                       <X size={16} />
                     </button>
                   </div>
                 ) : (
                   <>
-                    <Upload size={28} style={{ color: '#2A4560', margin: '0 auto 0.75rem' }} />
-                    <div style={{ fontFamily: "'Mulish', sans-serif", fontWeight: 700, fontSize: '0.875rem', color: 'var(--cs-text-2)', marginBottom: '0.25rem' }}>
+                    <Upload size={28} style={{ color: 'rgba(226,232,244,0.25)', margin: '0 auto 0.75rem' }} />
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.875rem', color: 'var(--cs-text-2)', marginBottom: '0.25rem' }}>
                       Drag & drop or click to upload
                     </div>
-                    <div style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.75rem', color: '#4A6080' }}>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.75rem', color: 'rgba(226,232,244,0.4)' }}>
                       PDF, DOC, or DOCX · Max 5 MB
                     </div>
                   </>
@@ -331,9 +362,9 @@ function ApplicationModal({ job, onClose }: { job: Job; onClose: () => void }) {
                 width: '100%',
                 padding: '0.875rem',
                 borderRadius: '0.6rem',
-                background: submitting ? 'rgba(18,130,174,0.4)' : 'linear-gradient(135deg, #1282AE 0%, #0A917A 52%, #4E8A1A 100%)',
+                background: submitting ? 'rgba(43,127,255,0.4)' : '#2B7FFF',
                 color: '#fff',
-                fontFamily: "'Mulish', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: 700, fontSize: '1rem',
                 border: 'none', cursor: submitting ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
@@ -357,32 +388,32 @@ function SuccessState({ onClose, jobTitle }: { onClose: () => void; jobTitle: st
     <div style={{ padding: '3rem 2rem', textAlign: 'center' }}>
       <div style={{
         width: '64px', height: '64px', borderRadius: '50%',
-        background: 'rgba(30,200,168,0.12)', border: '2px solid rgba(30,200,168,0.3)',
+        background: 'rgba(96,165,250,0.12)', border: '2px solid rgba(96,165,250,0.3)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem',
       }}>
-        <CheckCircle2 size={30} style={{ color: '#1EC8A8' }} />
+        <CheckCircle2 size={30} style={{ color: '#60A5FA' }} />
       </div>
-      <h3 style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '1.375rem', color: 'var(--cs-text)', marginBottom: '0.625rem' }}>
+      <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '1.375rem', color: 'var(--cs-text)', marginBottom: '0.625rem' }}>
         Application Submitted!
       </h3>
-      <p style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.9375rem', color: 'var(--cs-text-2)', maxWidth: '380px', margin: '0 auto 0.75rem', lineHeight: 1.7 }}>
+      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.9375rem', color: 'var(--cs-text-2)', maxWidth: '380px', margin: '0 auto 0.75rem', lineHeight: 1.7 }}>
         Thank you for applying for <strong style={{ color: 'var(--cs-text)' }}>{jobTitle}</strong>. We&#39;ll review your application and get back to you within 3–5 business days.
       </p>
-      <p style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.8125rem', color: '#4A6080', marginBottom: '2rem' }}>
+      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.8125rem', color: 'rgba(226,232,244,0.4)', marginBottom: '2rem' }}>
         Check your email for a confirmation.
       </p>
       <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
         <button onClick={onClose} style={{
           padding: '0.625rem 1.5rem', borderRadius: '0.5rem',
           background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-          color: 'var(--cs-text-2)', fontFamily: "'Mulish', sans-serif", fontWeight: 600, cursor: 'pointer',
+          color: 'var(--cs-text-2)', fontFamily: "'Inter', sans-serif", fontWeight: 600, cursor: 'pointer',
         }}>
           Close
         </button>
         <Link href="/careers" onClick={onClose} style={{
           padding: '0.625rem 1.5rem', borderRadius: '0.5rem',
-          background: 'rgba(18,130,174,0.1)', border: '1px solid rgba(18,130,174,0.25)',
-          color: '#4DC8E8', fontFamily: "'Mulish', sans-serif", fontWeight: 600, textDecoration: 'none',
+          background: 'rgba(43,127,255,0.1)', border: '1px solid rgba(43,127,255,0.25)',
+          color: '#60A5FA', fontFamily: "'Inter', sans-serif", fontWeight: 600, textDecoration: 'none',
           display: 'inline-flex', alignItems: 'center',
         }}>
           View More Jobs
@@ -402,8 +433,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       border: '1px solid rgba(255,255,255,0.06)',
       borderRadius: '1rem',
     }}>
-      <h2 style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '1.0625rem', color: 'var(--cs-text)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <span style={{ width: '3px', height: '1.1em', borderRadius: '2px', background: 'linear-gradient(180deg, #1282AE, #1EC8A8)', display: 'inline-block' }} />
+      <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '1.0625rem', color: 'var(--cs-text)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span style={{ width: '3px', height: '1.1em', borderRadius: '2px', background: 'linear-gradient(180deg, #2B7FFF, #60A5FA)', display: 'inline-block' }} />
         {title}
       </h2>
       {children}
@@ -415,8 +446,8 @@ function BulletList({ items, accent }: { items: string[]; accent?: boolean }) {
   return (
     <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
       {items.map((item, i) => (
-        <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', fontFamily: "'Mulish', sans-serif", fontSize: '0.9rem', color: 'var(--cs-text-2)', lineHeight: 1.6 }}>
-          <CheckCircle2 size={14} style={{ color: accent ? '#1EC8A8' : '#1282AE', marginTop: '0.2em', flexShrink: 0 }} />
+        <li key={i} style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', fontFamily: "'Inter', sans-serif", fontSize: '0.9rem', color: 'var(--cs-text-2)', lineHeight: 1.6 }}>
+          <CheckCircle2 size={14} style={{ color: accent ? '#60A5FA' : '#2B7FFF', marginTop: '0.2em', flexShrink: 0 }} />
           {item}
         </li>
       ))}
@@ -429,10 +460,10 @@ function TagItem({ icon: Icon, text, highlight }: { icon: React.ElementType; tex
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
       padding: '0.3rem 0.75rem', borderRadius: '100px',
-      background: highlight ? 'rgba(18,130,174,0.15)' : 'rgba(255,255,255,0.04)',
-      border: `1px solid ${highlight ? 'rgba(18,130,174,0.3)' : 'rgba(255,255,255,0.07)'}`,
-      color: highlight ? '#4DC8E8' : '#8AA8C8',
-      fontFamily: "'Mulish', sans-serif", fontSize: '0.8125rem', fontWeight: 600,
+      background: highlight ? 'rgba(43,127,255,0.15)' : 'rgba(255,255,255,0.04)',
+      border: `1px solid ${highlight ? 'rgba(43,127,255,0.3)' : 'rgba(255,255,255,0.07)'}`,
+      color: highlight ? '#60A5FA' : 'rgba(226,232,244,0.7)',
+      fontFamily: "'Inter', sans-serif", fontSize: '0.8125rem', fontWeight: 600,
     }}>
       <Icon size={12} /> {text}
     </span>
@@ -442,7 +473,7 @@ function TagItem({ icon: Icon, text, highlight }: { icon: React.ElementType; tex
 function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '1.5rem' }}>
-      <div style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '0.875rem', color: '#1EC8A8', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.875rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '0.875rem', color: '#60A5FA', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.875rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         {title}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
@@ -473,7 +504,7 @@ function FormField({ label, value, onChange, placeholder, type = 'text', fullWid
 function LoadingState() {
   return (
     <div style={{ background: 'var(--cs-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Loader2 size={32} style={{ color: '#1282AE', animation: 'spin 1s linear infinite' }} />
+      <Loader2 size={32} style={{ color: '#2B7FFF', animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -482,10 +513,10 @@ function LoadingState() {
 function NotFoundState() {
   return (
     <div style={{ background: 'var(--cs-bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', textAlign: 'center', padding: '2rem' }}>
-      <Briefcase size={40} style={{ color: '#2A4560' }} />
-      <h2 style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '1.5rem', color: '#3D5570' }}>Job Not Found</h2>
-      <p style={{ fontFamily: "'Mulish', sans-serif", color: '#4A6080' }}>This position may have been filled or is no longer active.</p>
-      <Link href="/careers" style={{ color: '#4DC8E8', fontFamily: "'Mulish', sans-serif", textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+      <Briefcase size={40} style={{ color: 'rgba(226,232,244,0.25)' }} />
+      <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '1.5rem', color: 'rgba(226,232,244,0.5)' }}>Job Not Found</h2>
+      <p style={{ fontFamily: "'Inter', sans-serif", color: 'rgba(226,232,244,0.4)' }}>This position may have been filled or is no longer active.</p>
+      <Link href="/careers" style={{ color: '#60A5FA', fontFamily: "'Inter', sans-serif", textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
         <ArrowLeft size={15} /> Back to all openings
       </Link>
     </div>
@@ -497,8 +528,8 @@ const rowStyle: React.CSSProperties = {
 };
 
 const labelStyle: React.CSSProperties = {
-  display: 'block', fontFamily: "'Mulish', sans-serif", fontWeight: 600, fontSize: '0.8125rem',
-  color: '#7A9ABF', marginBottom: '0.375rem',
+  display: 'block', fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '0.8125rem',
+  color: 'rgba(226,232,244,0.6)', marginBottom: '0.375rem',
 };
 
 const inputBase: React.CSSProperties = {
@@ -508,7 +539,7 @@ const inputBase: React.CSSProperties = {
   border: '1px solid rgba(255,255,255,0.08)',
   borderRadius: '0.5rem',
   color: 'var(--cs-text)',
-  fontFamily: "'Mulish', sans-serif",
+  fontFamily: "'Inter', sans-serif",
   fontSize: '0.875rem',
   outline: 'none',
   transition: 'border-color 0.2s',

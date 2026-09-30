@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { jobs, applications } from '@/lib/schema';
+import { jobs, applications, hrChecks } from '@/lib/schema';
 import { requireAdmin } from '@/lib/auth';
 import { count, eq } from 'drizzle-orm';
 
@@ -15,15 +15,19 @@ export async function GET(request: Request) {
       [{ total_applications }],
       [{ pending_applications }],
       [{ shortlisted }],
+      [{ total_hr_checks }],
+      [{ new_hr_checks }],
     ] = await Promise.all([
       db.select({ total_jobs:           count() }).from(jobs),
       db.select({ active_jobs:          count() }).from(jobs).where(eq(jobs.isActive, true)),
       db.select({ total_applications:   count() }).from(applications),
       db.select({ pending_applications: count() }).from(applications).where(eq(applications.status, 'pending')),
       db.select({ shortlisted:          count() }).from(applications).where(eq(applications.status, 'shortlisted')),
+      db.select({ total_hr_checks:       count() }).from(hrChecks),
+      db.select({ new_hr_checks:         count() }).from(hrChecks).where(eq(hrChecks.status, 'new')),
     ]);
 
-    return NextResponse.json({ stats: { total_jobs, active_jobs, total_applications, pending_applications, shortlisted } });
+    return NextResponse.json({ stats: { total_jobs, active_jobs, total_applications, pending_applications, shortlisted, total_hr_checks, new_hr_checks } });
   } catch (e) {
     console.error('[Admin] GET /stats:', e);
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });

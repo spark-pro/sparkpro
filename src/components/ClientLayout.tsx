@@ -1,14 +1,18 @@
 'use client';
 
+import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Header } from './Header';
-import { Footer } from './Footer';
-import { BackToTop } from './BackToTop';
+import Nav from './Nav';
+import Footer from './Footer';
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   // Admin pages get no public header/footer
   const isAdmin = pathname?.startsWith('/admin-sparkpro');
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   if (isAdmin) {
     return (
@@ -19,11 +23,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1">{children}</main>
+    <div className="min-h-screen" style={{ background: '#050A14' }}>
+      <Nav />
+      <main>{children}</main>
       <Footer />
-      <BackToTop />
     </div>
   );
 }

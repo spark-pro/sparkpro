@@ -1,172 +1,93 @@
 'use client';
 
 import Link from 'next/link';
-import { Mail, Phone, MapPin, Clock, Linkedin, Facebook, Instagram, MessageCircle } from 'lucide-react';
 
-export function Footer() {
+const solutions = [
+  { label: 'HR Independence Audit', href: '/solutions' },
+  { label: 'HR Foundation Build', href: '/solutions' },
+  { label: 'People Operating System', href: '/solutions' },
+  { label: 'Manager Enablement', href: '/solutions' },
+  { label: 'Performance & Retention', href: '/solutions' },
+  { label: 'Payroll & Compliance', href: '/solutions' },
+  { label: 'Continuous HR Partner', href: '/solutions' },
+];
+
+const company = [
+  { label: 'About', href: '/about' },
+  { label: 'How We Work', href: '/how-we-work' },
+  { label: 'For Startups', href: '/for-startups' },
+  { label: 'For SMEs', href: '/for-smes' },
+  { label: 'Insights', href: '/insights' },
+  { label: 'Careers', href: '/careers' },
+  { label: 'Contact', href: '/contact' },
+];
+
+export default function Footer() {
   return (
-    <footer style={{ background: 'var(--cs-bg-2)', borderTop: '1px solid var(--cs-border)' }}>
-      {/* Top gradient band */}
-      <div style={{
-        height: '2px',
-        background: 'linear-gradient(90deg, #1282AE 0%, #1EC8A8 50%, #80CC30 100%)',
-      }} />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" style={{ paddingTop: '4rem', paddingBottom: '2rem' }}>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10" style={{ marginBottom: '3rem' }}>
-
-          {/* Company Info */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <Link href="/" style={{ display: 'inline-block' }}>
-              <img
-                src="/logo.png"
-                alt="Spark Pro"
-                style={{ height: '60px', width: 'auto' }}
-              />
-            </Link>
-            <p style={{ fontSize: '0.875rem', lineHeight: 1.8, color: 'var(--cs-text-2)', maxWidth: '240px' }}>
-              Integrated business solutions combining HR infrastructure, custom software development, and AI automation.
+    <footer style={{ background: '#020812', borderTop: '1px solid rgba(43,127,255,0.1)' }}>
+      <div className="max-w-7xl mx-auto px-6 pt-20 pb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          {/* Brand */}
+          <div className="lg:col-span-2">
+            <Link href="/" className="flex items-center gap-3 mb-6">
+<img src="/logo.png" alt="Spark Pro" style={{ height: 72, width: "auto" }} />
+</Link>
+            <p className="text-sm leading-relaxed mb-6 max-w-xs" style={{ color: 'rgba(226,232,244,0.5)', fontFamily: "'Inter', sans-serif" }}>
+              A people infrastructure company helping growing businesses build HR systems, processes and managers that allow the business to scale without becoming dependent on the founder.
             </p>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              {[
-                { href: 'https://www.linkedin.com/company/sparkpro/?viewAsMember=true', Icon: Linkedin },
-                { href: 'https://www.facebook.com/share/1F4Q9hLkvK/', Icon: Facebook },
-                { href: 'https://www.instagram.com/spark_pro_sp?igsh=a2xpemt4cnZ2YjIy', Icon: Instagram },
-                { href: 'https://wa.me/917598686212', Icon: MessageCircle },
-              ].map(({ href, Icon }, i) => (
-                <a
-                  key={i}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '0.5rem',
-                    background: 'var(--cs-ghost-bg)',
-                    border: '1px solid var(--cs-ghost-border)',
-                    color: 'var(--cs-text-2)',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = 'rgba(18,130,174,0.12)';
-                    e.currentTarget.style.borderColor = 'rgba(18,130,174,0.3)';
-                    e.currentTarget.style.color = '#A78BFA';
-                    e.currentTarget.style.boxShadow = '0 0 12px rgba(99,102,241,0.3)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'var(--cs-ghost-bg)';
-                    e.currentTarget.style.borderColor = 'var(--cs-ghost-border)';
-                    e.currentTarget.style.color = 'var(--cs-text-2)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  <Icon size={15} />
-                </a>
-              ))}
+            <div className="inline-block px-4 py-2 rounded-lg text-xs font-medium" style={{ background: 'rgba(43,127,255,0.1)', color: '#60A5FA', border: '1px solid rgba(43,127,255,0.2)', fontFamily: "'Inter', sans-serif" }}>
+              Build HR. Reduce Founder Dependency.
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Solutions */}
           <div>
-            <h3 style={{
-              fontFamily: "'Mulish', sans-serif",
-              fontWeight: 700,
-              fontSize: '0.6875rem',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              background: 'linear-gradient(135deg, #4DC8E8, #1EC8A8, #80CC30)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              marginBottom: '1.25rem',
-            }}>
-              Quick Links
-            </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-              {[
-                { to: '/', label: 'Home' },
-                { to: '/about', label: 'About Us' },
-                { to: '/services', label: 'Services' },
-                { to: '/careers', label: 'Careers' },
-                { to: '/contact', label: 'Contact' },
-              ].map(({ to, label }) => (
-                <li key={to}><Link href={to} className="cs-footer-link">{label}</Link></li>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-5" style={{ color: 'rgba(226,232,244,0.4)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Solutions</p>
+            <ul className="space-y-3">
+              {solutions.map((s) => (
+                <li key={s.label}>
+                  <Link
+                    href={s.href}
+                    className="text-sm transition-colors duration-150"
+                    style={{ color: 'rgba(226,232,244,0.55)', fontFamily: "'Inter', sans-serif" }}
+                    onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#E2E8F4'}
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(226,232,244,0.55)'}
+                  >
+                    {s.label}
+                  </Link>
+                </li>
               ))}
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Company */}
           <div>
-            <h3 style={{
-              fontFamily: "'Mulish', sans-serif",
-              fontWeight: 700,
-              fontSize: '0.6875rem',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              background: 'linear-gradient(135deg, #4DC8E8, #1EC8A8, #80CC30)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              marginBottom: '1.25rem',
-            }}>
-              Services
-            </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-              {[
-                { to: '/services#hr-services', label: 'HR Services' },
-                { to: '/services#it-services', label: 'IT Services' },
-                { to: '/services#ai-services', label: 'AI Services' },
-                { to: '/contact', label: 'Get Started' },
-              ].map(({ to, label }) => (
-                <li key={to}><Link href={to} className="cs-footer-link">{label}</Link></li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 style={{
-              fontFamily: "'Mulish', sans-serif",
-              fontWeight: 700,
-              fontSize: '0.6875rem',
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
-              background: 'linear-gradient(135deg, #4DC8E8, #1EC8A8, #80CC30)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              marginBottom: '1.25rem',
-            }}>
-              Contact
-            </h3>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-              {[
-                { Icon: Mail, text: 'info@sparkpro.in' },
-                { Icon: Phone, text: '+91-75986 86212' },
-                { Icon: MapPin, text: 'Trichy, Tamilnadu - 620012' },
-                { Icon: Clock, text: 'Mon–Sat, 9:30 AM – 6:30 PM' },
-              ].map(({ Icon, text }, i) => (
-                <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', fontSize: '0.875rem', color: 'var(--cs-text-2)' }}>
-                  <Icon size={14} style={{ marginTop: '0.2rem', flexShrink: 0, color: '#1EC8A8' }} />
-                  <span>{text}</span>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-5" style={{ color: 'rgba(226,232,244,0.4)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Company</p>
+            <ul className="space-y-3">
+              {company.map((c) => (
+                <li key={c.label}>
+                  <Link
+                    href={c.href}
+                    className="text-sm transition-colors duration-150"
+                    style={{ color: 'rgba(226,232,244,0.55)', fontFamily: "'Inter', sans-serif" }}
+                    onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#E2E8F4'}
+                    onMouseLeave={(e) => (e.target as HTMLElement).style.color = 'rgba(226,232,244,0.55)'}
+                  >
+                    {c.label}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div style={{
-          borderTop: '1px solid var(--cs-border)',
-          paddingTop: '1.5rem',
-          textAlign: 'center',
-        }}>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--cs-light)' }}>
-            &copy; {new Date().getFullYear()} Spark Pro. All rights reserved.
+        {/* Bottom */}
+        <div className="flex flex-col md:flex-row items-center justify-between pt-8 gap-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <p className="text-xs" style={{ color: 'rgba(226,232,244,0.3)', fontFamily: "'Inter', sans-serif" }}>
+            © {new Date().getFullYear()} Spark Pro. People Infrastructure Company.
+          </p>
+          <p className="text-xs font-medium" style={{ color: 'rgba(43,127,255,0.6)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            HR systems built to outgrow the founder.
           </p>
         </div>
       </div>

@@ -6,8 +6,9 @@ export default {
   schema:    './src/lib/schema.ts',
   out:       './database/migrations',
   dialect:   'postgresql',
+  schemaFilter: ['spark'],
   dbCredentials: {
-    url: (process.env.POSTGRES_URL || process.env.DATABASE_URL)!,
+    url: process.env.SPARK_PRO_DATABASE_URL!,
     ssl: 'require',
   },
 } satisfies Config;

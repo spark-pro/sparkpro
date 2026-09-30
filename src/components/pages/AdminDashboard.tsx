@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   LogOut, Plus, Pencil, Trash2, Eye, Download, X, Loader2,
   Briefcase, Users, TrendingUp, Clock, CheckCircle2, Search,
-  ToggleLeft, ToggleRight, Shield, Lock, Eye as EyeIcon, EyeOff,
+  ToggleLeft, ToggleRight, Shield, Lock, Eye as EyeIcon, EyeOff, ClipboardCheck, Mail, FileSpreadsheet, PhoneCall, CalendarCheck,
 } from 'lucide-react';
 
 // ── Types (camelCase — matches Drizzle output) ──────────────────────────────
@@ -27,10 +27,26 @@ interface Application {
   jobTitle?: string;
 }
 
+interface HrCheck {
+  id: number; name: string; company: string; companySize: string;
+  email: string; phone: string | null; businessStage: string;
+  primaryChallenge: string; message: string | null;
+  status: 'new' | 'contacted' | 'scheduled' | 'closed';
+  adminNotes: string | null; createdAt: string;
+}
+
 interface Stats {
+  total_hr_checks?: number; new_hr_checks?: number;
   total_jobs: number; active_jobs: number;
   total_applications: number; pending_applications: number; shortlisted: number;
 }
+
+const HR_STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
+  new:       { bg: 'rgba(43,127,255,0.14)',  color: '#60A5FA', label: 'New'       },
+  contacted: { bg: 'rgba(234,179,8,0.12)',   color: '#FCD34D', label: 'Contacted' },
+  scheduled: { bg: 'rgba(16,185,129,0.12)',  color: '#6EE7B7', label: 'Scheduled' },
+  closed:    { bg: 'rgba(100,100,100,0.14)', color: '#9CA3AF', label: 'Closed'    },
+};
 
 const EMPTY_JOB: Omit<Job, 'id' | 'createdAt' | 'applicationCount'> = {
   title: '', location: '', experience: '',
@@ -49,7 +65,9 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }
 
 export function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [section, setSection] = useState<'hr' | 'jobs'>('hr');
   const [activeTab, setTab] = useState<'jobs' | 'applications'>('jobs');
+  const [exporting, setExporting] = useState(false);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -60,6 +78,11 @@ export function AdminDashboard() {
   const [stats,   setStats  ] = useState<Stats | null>(null);
   const [jobs,    setJobs   ] = useState<Job[]>([]);
   const [apps,    setApps   ] = useState<Application[]>([]);
+  const [hrChecks, setHrChecks] = useState<HrCheck[]>([]);
+  const [hrModal,  setHrModal ] = useState<HrCheck | null>(null);
+  const [hrDelete, setHrDelete] = useState<{ id: number } | null>(null);
+  const [hrFilter, setHrFilter] = useState('');
+  const [hrSearch, setHrSearch] = useState('');
   const [loading, setLoading] = useState(false);
 
   const [jobModal,   setJobModal ] = useState<{ open: boolean; job: Partial<Job> | null; editing: boolean }>({ open: false, job: null, editing: false });
@@ -74,13 +97,14 @@ export function AdminDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [sRes, jRes, aRes] = await Promise.all([
+      const [sRes, jRes, aRes, hRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/jobs'),
         fetch('/api/admin/applications'),
+        fetch('/api/admin/hr-checks'),
       ]);
       if (sRes.status === 401 || jRes.status === 401) { setAuthed(false); return; }
-      const [sd, jd, ad] = await Promise.all([sRes.json(), jRes.json(), aRes.json()]);
+      const [sd, jd, ad, hd] = await Promise.all([sRes.json(), jRes.json(), aRes.json(), hRes.json()]);
       setStats(sd.stats);
       setJobs((jd.jobs || []).map((j: Job) => ({
         ...j,
@@ -88,6 +112,7 @@ export function AdminDashboard() {
         benefits:     parseJSON(j.benefits),
       })));
       setApps(ad.applications || []);
+      setHrChecks(hd.hrChecks || []);
       setAuthed(true);
     } catch {
       setAuthed(false);
@@ -124,7 +149,7 @@ export function AdminDashboard() {
 
   const handleLogout = async () => {
     await fetch('/api/admin/logout', { method: 'POST' });
-    setAuthed(false); setStats(null); setJobs([]); setApps([]);
+    setAuthed(false); setStats(null); setJobs([]); setApps([]); setHrChecks([]);
   };
 
   // ── Job CRUD ───────────────────────────────────────────────────────────
@@ -154,6 +179,45 @@ export function AdminDashboard() {
     if (appModal) setAppModal(p => p ? { ...p, status: status as Application['status'], adminNotes: notes ?? p.adminNotes } : null);
   };
 
+  const updateHrCheck = async (id: number, status: string, notes?: string) => {
+    await fetch(`/api/admin/hr-checks/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, admin_notes: notes }) });
+    fetchData();
+    if (hrModal) setHrModal(p => p ? { ...p, status: status as HrCheck['status'], adminNotes: notes ?? p.adminNotes } : null);
+  };
+
+  const deleteHrCheck = async (id: number) => {
+    await fetch(`/api/admin/hr-checks/${id}`, { method: 'DELETE' });
+    setHrDelete(null); setHrModal(null); fetchData();
+  };
+
+  const filteredHr = hrChecks.filter(h => {
+    if (hrFilter && h.status !== hrFilter) return false;
+    const q = hrSearch.trim().toLowerCase();
+    return !q || [h.name, h.company, h.email, h.primaryChallenge].some(v => v.toLowerCase().includes(q));
+  });
+
+  const exportExcel = async () => {
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (hrFilter)        params.set('status', hrFilter);
+      if (hrSearch.trim()) params.set('q', hrSearch.trim());
+      const res = await fetch(`/api/admin/hr-checks/export?${params}`);
+      if (!res.ok) throw new Error('export failed');
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = `hr-independence-checks-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Could not export to Excel. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // ── Loading state ──────────────────────────────────────────────────────
 
   if (authed === null) return <FullLoader />;
@@ -163,7 +227,7 @@ export function AdminDashboard() {
   if (!authed) return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #040812 0%, #070B18 50%, #050A14 100%)',
+      background: 'linear-gradient(135deg, #020812 0%, #050A14 50%, #050A14 100%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '1.5rem',
       position: 'relative',
@@ -172,27 +236,27 @@ export function AdminDashboard() {
       {/* Grid overlay */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        backgroundImage: 'linear-gradient(rgba(18,130,174,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(18,130,174,0.04) 1px, transparent 1px)',
+        backgroundImage: 'linear-gradient(rgba(43,127,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(43,127,255,0.04) 1px, transparent 1px)',
         backgroundSize: '48px 48px',
       }} />
 
       {/* Ambient orbs */}
-      <div style={{ position: 'absolute', top: '-20%', left: '-15%', width: '800px', height: '800px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(18,130,174,0.1) 0%, transparent 60%)', pointerEvents: 'none', animation: 'pulse 8s ease-in-out infinite' }} />
-      <div style={{ position: 'absolute', bottom: '-20%', right: '-15%', width: '700px', height: '700px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(10,145,122,0.09) 0%, transparent 60%)', pointerEvents: 'none', animation: 'pulse 10s ease-in-out infinite reverse' }} />
-      <div style={{ position: 'absolute', top: '35%', right: '10%', width: '350px', height: '350px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(128,204,48,0.05) 0%, transparent 60%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: '-20%', left: '-15%', width: '800px', height: '800px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(43,127,255,0.1) 0%, transparent 60%)', pointerEvents: 'none', animation: 'pulse 8s ease-in-out infinite' }} />
+      <div style={{ position: 'absolute', bottom: '-20%', right: '-15%', width: '700px', height: '700px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(26,106,255,0.09) 0%, transparent 60%)', pointerEvents: 'none', animation: 'pulse 10s ease-in-out infinite reverse' }} />
+      <div style={{ position: 'absolute', top: '35%', right: '10%', width: '350px', height: '350px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(96,165,250,0.05) 0%, transparent 60%)', pointerEvents: 'none' }} />
 
       {/* Card */}
       <div style={{
         width: '100%', maxWidth: '460px', position: 'relative', zIndex: 1,
         background: 'rgba(8, 13, 26, 0.95)',
-        border: '1px solid rgba(18,130,174,0.2)',
+        border: '1px solid rgba(43,127,255,0.2)',
         borderRadius: '1.75rem',
         overflow: 'hidden',
-        boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 40px 100px rgba(0,0,0,0.7), 0 0 80px rgba(18,130,174,0.06)',
+        boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 40px 100px rgba(0,0,0,0.7), 0 0 80px rgba(43,127,255,0.06)',
         backdropFilter: 'blur(20px)',
       }}>
         {/* Top gradient bar */}
-        <div style={{ height: '4px', background: 'linear-gradient(90deg, #1282AE 0%, #1EC8A8 50%, #80CC30 100%)' }} />
+        <div style={{ height: '4px', background: 'linear-gradient(90deg, #2B7FFF 0%, #60A5FA 50%, #60A5FA 100%)' }} />
 
         {/* Header */}
         <div style={{ padding: '2.5rem 2.5rem 1.75rem', textAlign: 'center' }}>
@@ -200,19 +264,19 @@ export function AdminDashboard() {
           <div style={{ position: 'relative', display: 'inline-block', marginBottom: '1.5rem' }}>
             <div style={{
               position: 'absolute', inset: '-8px', borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(18,130,174,0.15) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(43,127,255,0.15) 0%, transparent 70%)',
             }} />
             <img src="/logo.png" alt="Spark Pro" style={{ height: '64px', width: 'auto', display: 'block', position: 'relative' }} />
           </div>
 
           <h1 style={{
-            fontFamily: "'Exo 2', sans-serif", fontWeight: 800,
+            fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800,
             fontSize: '1.75rem', color: 'var(--cs-text)',
             margin: '0 0 0.5rem', letterSpacing: '-0.02em',
           }}>
             Admin Portal
           </h1>
-          <p style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.875rem', color: 'var(--cs-light)', margin: '0 0 1.25rem' }}>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', color: 'var(--cs-light)', margin: '0 0 1.25rem' }}>
             Spark Pro Management Dashboard
           </p>
 
@@ -223,14 +287,14 @@ export function AdminDashboard() {
             background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)',
           }}>
             <Shield size={11} style={{ color: '#F87171' }} />
-            <span style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.6875rem', fontWeight: 700, color: '#F87171', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.6875rem', fontWeight: 700, color: '#F87171', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
               Restricted Access
             </span>
           </div>
         </div>
 
         {/* Divider with gradient */}
-        <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(18,130,174,0.3), transparent)', margin: '0 2rem' }} />
+        <div style={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(43,127,255,0.3), transparent)', margin: '0 2rem' }} />
 
         {/* Form */}
         <form onSubmit={handleLogin} style={{ padding: '2rem 2.5rem' }}>
@@ -240,7 +304,7 @@ export function AdminDashboard() {
               padding: '0.875rem 1rem', marginBottom: '1.5rem',
               background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.25)',
               borderRadius: '0.75rem', color: '#F87171',
-              fontFamily: "'Mulish', sans-serif", fontSize: '0.875rem',
+              fontFamily: "'Inter', sans-serif", fontSize: '0.875rem',
               animation: 'shake 0.4s ease',
             }}>
               <Shield size={15} style={{ flexShrink: 0, marginTop: '1px' }} />
@@ -252,7 +316,7 @@ export function AdminDashboard() {
           <div style={{ marginBottom: '1.125rem' }}>
             <label style={aLabelStyle}>Username</label>
             <div style={{ position: 'relative' }}>
-              <Users size={15} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#2A4060', pointerEvents: 'none' }} />
+              <Users size={15} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#1E3A6E', pointerEvents: 'none' }} />
               <input
                 type="text"
                 value={username}
@@ -261,7 +325,7 @@ export function AdminDashboard() {
                 autoComplete="username"
                 required
                 style={{ ...aInputStyle, paddingLeft: '2.625rem', width: '100%', boxSizing: 'border-box' as const }}
-                onFocus={e  => { e.currentTarget.style.borderColor = 'rgba(18,130,174,0.55)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,130,174,0.08)'; }}
+                onFocus={e  => { e.currentTarget.style.borderColor = 'rgba(43,127,255,0.55)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(43,127,255,0.08)'; }}
                 onBlur={e   => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none'; }}
               />
             </div>
@@ -271,7 +335,7 @@ export function AdminDashboard() {
           <div style={{ marginBottom: '2rem' }}>
             <label style={aLabelStyle}>Password</label>
             <div style={{ position: 'relative' }}>
-              <Lock size={15} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#2A4060', pointerEvents: 'none' }} />
+              <Lock size={15} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#1E3A6E', pointerEvents: 'none' }} />
               <input
                 type={showPw ? 'text' : 'password'}
                 value={password}
@@ -280,15 +344,15 @@ export function AdminDashboard() {
                 autoComplete="current-password"
                 required
                 style={{ ...aInputStyle, paddingLeft: '2.625rem', paddingRight: '3rem', width: '100%', boxSizing: 'border-box' as const }}
-                onFocus={e  => { e.currentTarget.style.borderColor = 'rgba(18,130,174,0.55)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(18,130,174,0.08)'; }}
+                onFocus={e  => { e.currentTarget.style.borderColor = 'rgba(43,127,255,0.55)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(43,127,255,0.08)'; }}
                 onBlur={e   => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.boxShadow = 'none'; }}
               />
               <button
                 type="button"
                 onClick={() => setShowPw(p => !p)}
-                style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#2A4060', padding: '0.25rem', lineHeight: 0, borderRadius: '4px', transition: 'color 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#4DC8E8'}
-                onMouseLeave={e => e.currentTarget.style.color = '#2A4060'}
+                style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#1E3A6E', padding: '0.25rem', lineHeight: 0, borderRadius: '4px', transition: 'color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#60A5FA'}
+                onMouseLeave={e => e.currentTarget.style.color = '#1E3A6E'}
               >
                 {showPw ? <EyeOff size={15} /> : <EyeIcon size={15} />}
               </button>
@@ -304,20 +368,20 @@ export function AdminDashboard() {
               padding: '0.9rem',
               borderRadius: '0.875rem',
               background: logging
-                ? 'rgba(18,130,174,0.25)'
-                : 'linear-gradient(135deg, #1282AE 0%, #0A917A 55%, #4E8A1A 100%)',
+                ? 'rgba(43,127,255,0.25)'
+                : '#2B7FFF',
               color: logging ? 'rgba(255,255,255,0.4)' : '#fff',
-              fontFamily: "'Mulish', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               fontWeight: 700, fontSize: '1rem',
-              border: '1px solid ' + (logging ? 'rgba(18,130,174,0.15)' : 'rgba(255,255,255,0.12)'),
+              border: '1px solid ' + (logging ? 'rgba(43,127,255,0.15)' : 'rgba(255,255,255,0.12)'),
               cursor: logging ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-              boxShadow: logging ? 'none' : '0 4px 20px rgba(18,130,174,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+              boxShadow: logging ? 'none' : '0 4px 20px rgba(43,127,255,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
               transition: 'all 0.2s',
               letterSpacing: '0.03em',
             }}
-            onMouseEnter={e => { if (!logging) { e.currentTarget.style.filter = 'brightness(1.12)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(18,130,174,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}}
-            onMouseLeave={e => { e.currentTarget.style.filter = 'none'; e.currentTarget.style.boxShadow = logging ? 'none' : '0 4px 20px rgba(18,130,174,0.3), inset 0 1px 0 rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'none'; }}
+            onMouseEnter={e => { if (!logging) { e.currentTarget.style.filter = 'brightness(1.12)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(43,127,255,0.4), inset 0 1px 0 rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}}
+            onMouseLeave={e => { e.currentTarget.style.filter = 'none'; e.currentTarget.style.boxShadow = logging ? 'none' : '0 4px 20px rgba(43,127,255,0.3), inset 0 1px 0 rgba(255,255,255,0.15)'; e.currentTarget.style.transform = 'none'; }}
           >
             {logging
               ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Signing in…</>
@@ -328,8 +392,8 @@ export function AdminDashboard() {
 
         {/* Footer note */}
         <div style={{ padding: '1rem 2.5rem 1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-          <Lock size={11} style={{ color: '#2A4060' }} />
-          <span style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.75rem', color: '#2A4060' }}>
+          <Lock size={11} style={{ color: '#1E3A6E' }} />
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.75rem', color: '#1E3A6E' }}>
             Protected with JWT · bcrypt encryption
           </span>
         </div>
@@ -357,14 +421,41 @@ export function AdminDashboard() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', color: 'var(--cs-text)' }}>
       {/* Top Nav */}
-      <nav style={{ background: '#0B0F1E', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', position: 'sticky', top: 0, zIndex: 50 }}>
+      <nav style={{ background: '#050A14', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '64px', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
           <img src="/logo.png" alt="Spark Pro" style={{ height: '40px', width: 'auto' }} />
           <div style={{ width: '1px', height: '22px', background: 'rgba(255,255,255,0.1)' }} />
-          <span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '0.8125rem', color: '#4DC8E8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Admin Portal</span>
+          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '0.8125rem', color: '#60A5FA', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Admin Portal</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.3rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(43,127,255,0.15)', borderRadius: '0.75rem', overflowX: 'auto' }}>
+          {([
+            { key: 'hr',   label: 'HR Independence Checks', icon: ClipboardCheck, badge: stats?.new_hr_checks ?? 0 },
+            { key: 'jobs', label: 'Jobs',                   icon: Briefcase,      badge: stats?.pending_applications ?? 0 },
+          ] as const).map(item => {
+            const active = section === item.key;
+            return (
+              <button key={item.key} onClick={() => setSection(item.key)} style={{
+                display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap',
+                padding: '0.55rem 1.5rem', minWidth: '150px', justifyContent: 'center', borderRadius: '0.5rem', cursor: 'pointer',
+                fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '0.8125rem',
+                background: active ? '#2B7FFF' : 'transparent',
+                color: active ? '#fff' : 'rgba(226,232,244,0.6)',
+                border: 'none', transition: 'all 0.2s',
+                boxShadow: active ? '0 0 18px rgba(43,127,255,0.35)' : 'none',
+              }}>
+                <item.icon size={15} />
+                {item.label}
+                {item.badge > 0 && (
+                  <span style={{ minWidth: '18px', padding: '0 0.4rem', borderRadius: '100px', fontSize: '0.6875rem', fontWeight: 700, lineHeight: '18px', textAlign: 'center', background: active ? 'rgba(255,255,255,0.22)' : 'rgba(43,127,255,0.2)', color: active ? '#fff' : '#60A5FA' }}>
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: '0.5rem', padding: '0.45rem 0.875rem', color: '#F87171', fontFamily: "'Mulish', sans-serif", fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer', transition: 'all 0.2s' }}
+          <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.18)', borderRadius: '0.5rem', padding: '0.45rem 0.875rem', color: '#F87171', fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '0.8125rem', cursor: 'pointer', transition: 'all 0.2s' }}
             onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.12)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.07)'; }}
           >
@@ -374,36 +465,131 @@ export function AdminDashboard() {
       </nav>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1.5rem' }}>
+        {/* Section header */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--cs-text)', margin: 0 }}>
+            {section === 'hr' ? 'HR Independence Checks' : 'Jobs'}
+          </h1>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', color: 'var(--cs-light)', margin: '0.25rem 0 0' }}>
+            {section === 'hr' ? 'Requests submitted through the Contact page.' : 'Manage job postings and review candidate applications.'}
+          </p>
+        </div>
+
         {/* Stats */}
-        {stats && (
+        {stats && section === 'hr' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-            <StatCard icon={Briefcase}    label="Total Jobs"       value={stats.total_jobs}          color="#4DC8E8" />
-            <StatCard icon={CheckCircle2} label="Active Positions" value={stats.active_jobs}          color="#1EC8A8" />
-            <StatCard icon={Users}        label="Total Applicants" value={stats.total_applications}   color="#80CC30" />
+            <StatCard icon={ClipboardCheck} label="Total Requests" value={stats.total_hr_checks ?? 0}                          color="#60A5FA" />
+            <StatCard icon={Mail}           label="New"            value={hrChecks.filter(h => h.status === 'new').length}       color="#60A5FA" />
+            <StatCard icon={PhoneCall}      label="Contacted"      value={hrChecks.filter(h => h.status === 'contacted').length} color="#FCD34D" />
+            <StatCard icon={CalendarCheck}  label="Scheduled"      value={hrChecks.filter(h => h.status === 'scheduled').length} color="#6EE7B7" />
+          </div>
+        )}
+        {stats && section === 'jobs' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <StatCard icon={Briefcase}    label="Total Jobs"       value={stats.total_jobs}           color="#60A5FA" />
+            <StatCard icon={CheckCircle2} label="Active Positions" value={stats.active_jobs}          color="#60A5FA" />
+            <StatCard icon={Users}        label="Total Applicants" value={stats.total_applications}   color="#60A5FA" />
             <StatCard icon={Clock}        label="Pending Review"   value={stats.pending_applications} color="#FCD34D" />
             <StatCard icon={TrendingUp}   label="Shortlisted"      value={stats.shortlisted}          color="#A78BFA" />
           </div>
         )}
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--cs-border)' }}>
-          {(['jobs', 'applications'] as const).map(tab => (
-            <button key={tab} onClick={() => setTab(tab)} style={{
-              padding: '0.625rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer',
-              fontFamily: "'Mulish', sans-serif", fontWeight: 700, fontSize: '0.9rem',
-              color: activeTab === tab ? '#4DC8E8' : '#4A6080',
-              borderBottom: activeTab === tab ? '2px solid #4DC8E8' : '2px solid transparent',
-              transition: 'color 0.2s', marginBottom: '-1px', textTransform: 'capitalize',
-            }}>
-              {tab === 'jobs' ? 'Job Posts' : 'Applications'}
-            </button>
-          ))}
-        </div>
+        {/* Jobs sub-tabs */}
+        {section === 'jobs' && (
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--cs-border)' }}>
+            {(['jobs', 'applications'] as const).map(tab => (
+              <button key={tab} onClick={() => setTab(tab)} style={{
+                padding: '0.625rem 1.75rem', background: 'none', border: 'none', cursor: 'pointer',
+                fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.9rem',
+                color: activeTab === tab ? '#60A5FA' : 'rgba(226,232,244,0.4)',
+                borderBottom: activeTab === tab ? '2px solid #60A5FA' : '2px solid transparent',
+                transition: 'color 0.2s', marginBottom: '-1px',
+              }}>
+                {tab === 'jobs' ? 'Job Posts' : 'Applications'}
+              </button>
+            ))}
+          </div>
+        )}
 
         {loading && <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--cs-light)' }}><Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /></div>}
 
+        {/* HR Independence Checks Tab */}
+        {!loading && section === 'hr' && (
+          <div>
+            <div style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+              <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: '320px' }}>
+                <Search size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--cs-light)', pointerEvents: 'none' }} />
+                <input type="text" placeholder="Search name, company, email…" value={hrSearch} onChange={e => setHrSearch(e.target.value)} style={{ ...aInputStyle, paddingLeft: '2.25rem', width: '100%', boxSizing: 'border-box' as const }} />
+              </div>
+              <select value={hrFilter} onChange={e => setHrFilter(e.target.value)} style={{ ...aInputStyle, flex: '0 1 180px' }}>
+                <option value="">All Statuses</option>
+                {Object.entries(HR_STATUS_STYLES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+              <button onClick={exportExcel} disabled={exporting || filteredHr.length === 0} style={{ ...aBtnStyle, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.45rem', opacity: exporting || filteredHr.length === 0 ? 0.5 : 1, cursor: exporting || filteredHr.length === 0 ? 'not-allowed' : 'pointer' }}>
+                {exporting ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <FileSpreadsheet size={16} />}
+                Download Excel
+              </button>
+            </div>
+
+            {filteredHr.length === 0
+              ? <EmptyState icon={ClipboardCheck} title="No requests found" sub="Submissions of 'Request Your HR Independence Check' will appear here." />
+              : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Inter', sans-serif", fontSize: '0.875rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--cs-border)' }}>
+                        {['Contact', 'Company', 'Stage', 'Primary Challenge', 'Received', 'Status', 'Actions'].map(h => (
+                          <th key={h} style={{ padding: '0.625rem 0.875rem', textAlign: 'left', color: 'var(--cs-light)', fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredHr.map(h => {
+                        const s = HR_STATUS_STYLES[h.status] || HR_STATUS_STYLES.new;
+                        return (
+                          <tr key={h.id} style={{ borderBottom: '1px solid var(--cs-border)', transition: 'background 0.15s' }}
+                            onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(255,255,255,0.02)'}
+                            onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'}
+                          >
+                            <td style={tdStyle}>
+                              <div style={{ fontWeight: 600, color: 'var(--cs-text)' }}>{h.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--cs-light)' }}>{h.email}</div>
+                            </td>
+                            <td style={tdStyle}>
+                              <div style={{ color: 'var(--cs-text-2)' }}>{h.company}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--cs-light)' }}>{h.companySize}</div>
+                            </td>
+                            <td style={{ ...tdStyle, color: 'var(--cs-text-2)', maxWidth: '220px' }}>{h.businessStage}</td>
+                            <td style={{ ...tdStyle, color: 'var(--cs-text-2)', maxWidth: '200px' }}>{h.primaryChallenge}</td>
+                            <td style={tdStyle}>
+                              <span style={{ color: 'var(--cs-light)', whiteSpace: 'nowrap' }}>
+                                {new Date(h.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            </td>
+                            <td style={tdStyle}>
+                              <select value={h.status} onChange={e => updateHrCheck(h.id, e.target.value)} style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}33`, borderRadius: '100px', padding: '0.2rem 0.5rem', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}>
+                                {Object.entries(HR_STATUS_STYLES).map(([k, v]) => <option key={k} value={k} style={{ background: 'var(--cs-card)', color: 'var(--cs-text)' }}>{v.label}</option>)}
+                              </select>
+                            </td>
+                            <td style={tdStyle}>
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <IconBtn icon={Eye}    onClick={() => setHrModal(h)}              title="View"   color="#A78BFA" />
+                                <IconBtn icon={Trash2} onClick={() => setHrDelete({ id: h.id })} title="Delete" color="#F87171" />
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }
+          </div>
+        )}
+
         {/* Jobs Tab */}
-        {!loading && activeTab === 'jobs' && (
+        {!loading && section === 'jobs' && activeTab === 'jobs' && (
           <div>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
               <div style={{ position: 'relative', flex: '1 1 220px', maxWidth: '320px' }}>
@@ -423,8 +609,8 @@ export function AdminDashboard() {
                     <div key={job.id} style={{ background: 'var(--cs-card)', border: '1px solid var(--cs-border)', borderRadius: '0.75rem', padding: '1.25rem 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                       <div style={{ flex: 1, minWidth: '200px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                          <span style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '0.9875rem', color: 'var(--cs-text)' }}>{job.title}</span>
-                          <span style={{ padding: '0.15rem 0.5rem', borderRadius: '100px', fontSize: '0.6875rem', fontWeight: 700, fontFamily: "'Mulish', sans-serif", background: job.isActive ? 'rgba(16,185,129,0.12)' : 'rgba(100,100,100,0.12)', color: job.isActive ? '#6EE7B7' : '#6B7280' }}>
+                          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '0.9875rem', color: 'var(--cs-text)' }}>{job.title}</span>
+                          <span style={{ padding: '0.15rem 0.5rem', borderRadius: '100px', fontSize: '0.6875rem', fontWeight: 700, fontFamily: "'Inter', sans-serif", background: job.isActive ? 'rgba(16,185,129,0.12)' : 'rgba(100,100,100,0.12)', color: job.isActive ? '#6EE7B7' : '#6B7280' }}>
                             {job.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </div>
@@ -435,7 +621,7 @@ export function AdminDashboard() {
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-                        <IconBtn icon={Pencil} onClick={() => setJobModal({ open: true, job: { ...job }, editing: true })} title="Edit"   color="#4DC8E8" />
+                        <IconBtn icon={Pencil} onClick={() => setJobModal({ open: true, job: { ...job }, editing: true })} title="Edit"   color="#60A5FA" />
                         <IconBtn icon={Trash2} onClick={() => setDelConf({ id: job.id })}                                  title="Delete" color="#F87171" />
                       </div>
                     </div>
@@ -447,7 +633,7 @@ export function AdminDashboard() {
         )}
 
         {/* Applications Tab */}
-        {!loading && activeTab === 'applications' && (
+        {!loading && section === 'jobs' && activeTab === 'applications' && (
           <div>
             <div style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
               <select value={appFilter.job_id} onChange={e => setAppFilter(f => ({ ...f, job_id: e.target.value }))} style={{ ...aInputStyle, flex: '0 1 200px' }}>
@@ -464,7 +650,7 @@ export function AdminDashboard() {
               ? <EmptyState icon={Users} title="No applications found" sub="Applications will appear here once candidates apply." />
               : (
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Mulish', sans-serif", fontSize: '0.875rem' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Inter', sans-serif", fontSize: '0.875rem' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid var(--cs-border)' }}>
                         {['Applicant', 'Job', 'Applied', 'Status', 'Resume', 'Actions'].map(h => (
@@ -494,13 +680,13 @@ export function AdminDashboard() {
                               </span>
                             </td>
                             <td style={tdStyle}>
-                              <select value={app.status} onChange={e => updateAppStatus(app.id, e.target.value)} style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}33`, borderRadius: '100px', padding: '0.2rem 0.5rem', fontFamily: "'Mulish', sans-serif", fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}>
+                              <select value={app.status} onChange={e => updateAppStatus(app.id, e.target.value)} style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}33`, borderRadius: '100px', padding: '0.2rem 0.5rem', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.75rem', cursor: 'pointer', outline: 'none' }}>
                                 {Object.entries(STATUS_STYLES).map(([k, v]) => <option key={k} value={k} style={{ background: 'var(--cs-card)', color: 'var(--cs-text)' }}>{v.label}</option>)}
                               </select>
                             </td>
                             <td style={tdStyle}>
                               {app.resumeFilename
-                                ? <a href={`/api/admin/resume/${encodeURIComponent(app.resumeFilename)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#4DC8E8', fontSize: '0.8125rem', textDecoration: 'none' }}><Download size={13} /> Download</a>
+                                ? <a href={`/api/admin/resume/${encodeURIComponent(app.resumeFilename)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#60A5FA', fontSize: '0.8125rem', textDecoration: 'none' }}><Download size={13} /> Download</a>
                                 : <span style={{ color: 'var(--cs-muted)', fontSize: '0.8125rem' }}>—</span>
                               }
                             </td>
@@ -525,6 +711,12 @@ export function AdminDashboard() {
       )}
       {appModal && (
         <AppDetailModal app={appModal} onClose={() => setAppModal(null)} onStatusChange={(s, n) => updateAppStatus(appModal.id, s, n)} />
+      )}
+      {hrModal && (
+        <HrCheckDetailModal check={hrModal} onClose={() => setHrModal(null)} onSave={(st, n) => updateHrCheck(hrModal.id, st, n)} onDelete={() => setHrDelete({ id: hrModal.id })} />
+      )}
+      {hrDelete && (
+        <ConfirmModal title="Delete Request?" message="This will permanently delete this HR Independence Check request. This cannot be undone." onConfirm={() => deleteHrCheck(hrDelete.id)} onCancel={() => setHrDelete(null)} />
       )}
       {deleteConf && (
         <ConfirmModal title="Delete Job Post?" message="This will permanently delete the job and all its applications. This cannot be undone." onConfirm={() => deleteJob(deleteConf.id)} onCancel={() => setDelConf(null)} />
@@ -568,11 +760,11 @@ function JobFormModal({ job, editing, onClose, onSave }: { job: Partial<Job>; ed
         <DynamicList label="Requirements"     items={form.requirements as string[]} onAdd={() => addItem('requirements')} onUpdate={(i, v) => updateItem('requirements', i, v)} onRemove={i => removeItem('requirements', i)} placeholder="Add a requirement…" />
         <DynamicList label="Benefits & Perks" items={form.benefits     as string[]} onAdd={() => addItem('benefits')}    onUpdate={(i, v) => updateItem('benefits',     i, v)} onRemove={i => removeItem('benefits',     i)} placeholder="Add a benefit…" />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1rem', padding: '0.875rem 1rem', background: 'var(--cs-input-bg)', borderRadius: '0.5rem' }}>
-          <span style={{ fontFamily: "'Mulish', sans-serif", fontWeight: 600, fontSize: '0.875rem', color: 'var(--cs-text-2)' }}>Status</span>
-          <button type="button" onClick={() => setForm(p => ({ ...p, isActive: p.isActive ? 0 : 1 }))} style={{ background: 'none', border: 'none', cursor: 'pointer', lineHeight: 0, color: form.isActive ? '#1EC8A8' : '#4A6080' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: '0.875rem', color: 'var(--cs-text-2)' }}>Status</span>
+          <button type="button" onClick={() => setForm(p => ({ ...p, isActive: p.isActive ? 0 : 1 }))} style={{ background: 'none', border: 'none', cursor: 'pointer', lineHeight: 0, color: form.isActive ? '#60A5FA' : 'rgba(226,232,244,0.4)' }}>
             {form.isActive ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
           </button>
-          <span style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.875rem', color: form.isActive ? '#1EC8A8' : '#4A6080' }}>{form.isActive ? 'Active (visible to candidates)' : 'Inactive (hidden)'}</span>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', color: form.isActive ? '#60A5FA' : 'rgba(226,232,244,0.4)' }}>{form.isActive ? 'Active (visible to candidates)' : 'Inactive (hidden)'}</span>
         </div>
       </div>
       <ModalFooter onClose={onClose} onSave={handleSave} saving={saving} label={editing ? 'Save Changes' : 'Create Job Post'} />
@@ -593,13 +785,13 @@ function AppDetailModal({ app, onClose, onStatusChange }: { app: Application; on
       <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '72vh' }}>
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.8125rem', color: 'var(--cs-light)' }}>Status:</span>
-            <select value={status} onChange={e => setStatus(e.target.value as Application['status'])} style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}44`, borderRadius: '100px', padding: '0.25rem 0.75rem', fontFamily: "'Mulish', sans-serif", fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', outline: 'none' }}>
+            <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.8125rem', color: 'var(--cs-light)' }}>Status:</span>
+            <select value={status} onChange={e => setStatus(e.target.value as Application['status'])} style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}44`, borderRadius: '100px', padding: '0.25rem 0.75rem', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', outline: 'none' }}>
               {Object.entries(STATUS_STYLES).map(([k, v]) => <option key={k} value={k} style={{ background: 'var(--cs-card)', color: 'var(--cs-text)' }}>{v.label}</option>)}
             </select>
           </div>
           {app.resumeFilename && (
-            <a href={`/api/admin/resume/${encodeURIComponent(app.resumeFilename)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.3rem 0.875rem', background: 'rgba(77,200,232,0.1)', border: '1px solid rgba(77,200,232,0.25)', borderRadius: '100px', color: '#4DC8E8', fontFamily: "'Mulish', sans-serif", fontSize: '0.8125rem', fontWeight: 700, textDecoration: 'none' }}>
+            <a href={`/api/admin/resume/${encodeURIComponent(app.resumeFilename)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.3rem 0.875rem', background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.25)', borderRadius: '100px', color: '#60A5FA', fontFamily: "'Inter', sans-serif", fontSize: '0.8125rem', fontWeight: 700, textDecoration: 'none' }}>
               <Download size={13} /> Download Resume
               {app.resumeOriginalName && <span style={{ fontWeight: 400, color: 'var(--cs-muted)' }}>({app.resumeOriginalName})</span>}
             </a>
@@ -624,6 +816,54 @@ function AppDetailModal({ app, onClose, onStatusChange }: { app: Application; on
   );
 }
 
+// ── HR Independence Check Detail Modal ─────────────────────────────────────
+
+function HrCheckDetailModal({ check, onClose, onSave, onDelete }: { check: HrCheck; onClose: () => void; onSave: (s: string, n?: string) => void; onDelete: () => void }) {
+  const [notes,  setNotes ] = useState(check.adminNotes || '');
+  const [status, setStatus] = useState(check.status);
+  const s = HR_STATUS_STYLES[status] || HR_STATUS_STYLES.new;
+
+  return (
+    <ModalShell onClose={onClose} wide>
+      <ModalHeader title={check.name} sub={`${check.company} · received ${new Date(check.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`} onClose={onClose} />
+      <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '72vh' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.8125rem', color: 'var(--cs-light)' }}>Status:</span>
+          <select value={status} onChange={e => setStatus(e.target.value as HrCheck['status'])} style={{ background: s.bg, color: s.color, border: `1px solid ${s.color}44`, borderRadius: '100px', padding: '0.25rem 0.75rem', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer', outline: 'none' }}>
+            {Object.entries(HR_STATUS_STYLES).map(([k, v]) => <option key={k} value={k} style={{ background: 'var(--cs-card)', color: 'var(--cs-text)' }}>{v.label}</option>)}
+          </select>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
+          <InfoBlock label="Email"             value={check.email} />
+          <InfoBlock label="Phone"             value={check.phone || '—'} />
+          <InfoBlock label="Company"           value={check.company} />
+          <InfoBlock label="Company Size"      value={check.companySize} />
+          <InfoBlock label="Business Stage"    value={check.businessStage} />
+          <InfoBlock label="Primary Challenge" value={check.primaryChallenge} />
+        </div>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={sectionLabel}>Message</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.9rem', color: 'var(--cs-text-2)', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{check.message || '—'}</div>
+        </div>
+
+        <div>
+          <div style={sectionLabel}>Admin Notes</div>
+          <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Add private notes about this request…" rows={3} style={{ ...aInputStyle, width: '100%', boxSizing: 'border-box' as const, resize: 'vertical' }} />
+        </div>
+      </div>
+      <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--cs-border)', display: 'flex', gap: '0.75rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <button onClick={onDelete} style={{ ...aSecBtnStyle, color: '#F87171', borderColor: 'rgba(239,68,68,0.25)' }}>Delete</button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button onClick={onClose} style={aSecBtnStyle}>Close</button>
+          <button onClick={() => { onSave(status, notes); onClose(); }} style={aBtnStyle}>Save Changes</button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
 // ── Shared sub-components ──────────────────────────────────────────────────
 
 function parseJSON(val: unknown): string[] {
@@ -639,16 +879,16 @@ function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType
         <div style={{ width: '32px', height: '32px', borderRadius: '0.5rem', background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon size={16} style={{ color }} />
         </div>
-        <span style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: 'var(--cs-light)' }}>{label}</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: 'var(--cs-light)' }}>{label}</span>
       </div>
-      <div style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 800, fontSize: '1.75rem', color }}>{value}</div>
+      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '1.75rem', color }}>{value}</div>
     </div>
   );
 }
 
 function MetaText({ children, icon: Icon }: { children: React.ReactNode; icon?: React.ElementType }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', fontFamily: "'Mulish', sans-serif", color: 'var(--cs-light)' }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', fontFamily: "'Inter', sans-serif", color: 'var(--cs-light)' }}>
       {Icon && <Icon size={11} />}{children}
     </span>
   );
@@ -669,8 +909,8 @@ function EmptyState({ icon: Icon, title, sub }: { icon: React.ElementType; title
   return (
     <div style={{ textAlign: 'center', padding: '4rem 1rem', background: 'var(--cs-card)', border: '1px solid var(--cs-border)', borderRadius: '0.75rem' }}>
       <Icon size={32} style={{ color: 'var(--cs-light)', margin: '0 auto 0.875rem' }} />
-      <div style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '1.0625rem', color: 'var(--cs-muted)', marginBottom: '0.375rem' }}>{title}</div>
-      <div style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.875rem', color: 'var(--cs-light)' }}>{sub}</div>
+      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '1.0625rem', color: 'var(--cs-muted)', marginBottom: '0.375rem' }}>{title}</div>
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', color: 'var(--cs-light)' }}>{sub}</div>
     </div>
   );
 }
@@ -678,7 +918,7 @@ function EmptyState({ icon: Icon, title, sub }: { icon: React.ElementType; title
 function ModalShell({ children, onClose, wide }: { children: React.ReactNode; onClose: () => void; wide?: boolean }) {
   useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = ''; }; }, []);
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(4,8,18,0.88)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem', overflowY: 'auto' }}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(2,8,18,0.88)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem', overflowY: 'auto' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ width: '100%', maxWidth: wide ? '700px' : '480px', background: 'var(--cs-card)', border: '1px solid var(--cs-border)', borderRadius: '1.25rem', overflow: 'hidden', marginTop: '1rem' }}>
         {children}
@@ -691,8 +931,8 @@ function ModalHeader({ title, sub, onClose }: { title: string; sub?: string; onC
   return (
     <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--cs-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--cs-surface)' }}>
       <div>
-        <h2 style={{ fontFamily: "'Exo 2', sans-serif", fontWeight: 700, fontSize: '1.0625rem', color: 'var(--cs-text)', margin: 0 }}>{title}</h2>
-        {sub && <div style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.8125rem', color: 'var(--cs-light)', marginTop: '0.2rem' }}>{sub}</div>}
+        <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: '1.0625rem', color: 'var(--cs-text)', margin: 0 }}>{title}</h2>
+        {sub && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.8125rem', color: 'var(--cs-light)', marginTop: '0.2rem' }}>{sub}</div>}
       </div>
       <button onClick={onClose} style={{ background: 'var(--cs-ghost-bg)', border: '1px solid var(--cs-ghost-border)', borderRadius: '0.4rem', padding: '0.35rem', cursor: 'pointer', color: 'var(--cs-text-2)', lineHeight: 0 }}><X size={16} /></button>
     </div>
@@ -744,11 +984,11 @@ function DynamicList({ label, items, onAdd, onUpdate, onRemove, placeholder }: {
     <div style={{ marginBottom: '1.25rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
         <label style={aLabelStyle}>{label}</label>
-        <button type="button" onClick={onAdd} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(18,130,174,0.1)', border: '1px solid rgba(18,130,174,0.2)', borderRadius: '0.375rem', padding: '0.2rem 0.6rem', color: '#4DC8E8', fontFamily: "'Mulish', sans-serif", fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
+        <button type="button" onClick={onAdd} style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(43,127,255,0.1)', border: '1px solid rgba(43,127,255,0.2)', borderRadius: '0.375rem', padding: '0.2rem 0.6rem', color: '#60A5FA', fontFamily: "'Inter', sans-serif", fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>
           <Plus size={12} /> Add
         </button>
       </div>
-      {items.length === 0 && <div style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.8rem', color: 'var(--cs-muted)', fontStyle: 'italic' }}>No items yet.</div>}
+      {items.length === 0 && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.8rem', color: 'var(--cs-muted)', fontStyle: 'italic' }}>No items yet.</div>}
       {items.map((item, i) => (
         <div key={i} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.4rem' }}>
           <input value={item} onChange={e => onUpdate(i, e.target.value)} placeholder={placeholder} style={{ ...aInputStyle, flex: 1, boxSizing: 'border-box' as const }} />
@@ -768,7 +1008,7 @@ function ConfirmModal({ title, message, onConfirm, onCancel }: { title: string; 
     <ModalShell onClose={onCancel}>
       <ModalHeader title={title} onClose={onCancel} />
       <div style={{ padding: '1.5rem' }}>
-        <p style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.9rem', color: 'var(--cs-text-2)', lineHeight: 1.7 }}>{message}</p>
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.9rem', color: 'var(--cs-text-2)', lineHeight: 1.7 }}>{message}</p>
       </div>
       <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--cs-border)', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
         <button onClick={onCancel} style={aSecBtnStyle}>Cancel</button>
@@ -781,20 +1021,20 @@ function ConfirmModal({ title, message, onConfirm, onCancel }: { title: string; 
 function InfoBlock({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ background: 'var(--cs-input-bg)', borderRadius: '0.5rem', padding: '0.75rem 1rem' }}>
-      <div style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: '#3D5570', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
-      <div style={{ fontFamily: "'Mulish', sans-serif", fontSize: '0.875rem', color: 'var(--cs-text-2)' }}>{value}</div>
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.75rem', fontWeight: 600, color: 'rgba(226,232,244,0.5)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', color: 'var(--cs-text-2)' }}>{value}</div>
     </div>
   );
 }
 
 function ErrBanner({ msg }: { msg: string }) {
-  return <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem', color: '#F87171', fontFamily: "'Mulish', sans-serif", fontSize: '0.875rem', marginBottom: '1rem' }}>{msg}</div>;
+  return <div style={{ padding: '0.75rem 1rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '0.5rem', color: '#F87171', fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', marginBottom: '1rem' }}>{msg}</div>;
 }
 
 function FullLoader() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cs-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Loader2 size={28} style={{ color: '#1282AE', animation: 'spin 1s linear infinite' }} />
+      <Loader2 size={28} style={{ color: '#2B7FFF', animation: 'spin 1s linear infinite' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -808,7 +1048,7 @@ const aInputStyle: React.CSSProperties = {
   border: '1px solid var(--cs-input-border)',
   borderRadius: '0.625rem',
   color: 'var(--cs-text)',
-  fontFamily: "'Mulish', sans-serif",
+  fontFamily: "'Inter', sans-serif",
   fontSize: '0.875rem',
   outline: 'none',
   transition: 'border-color 0.2s, box-shadow 0.2s',
@@ -816,7 +1056,7 @@ const aInputStyle: React.CSSProperties = {
 
 const aLabelStyle: React.CSSProperties = {
   display: 'block',
-  fontFamily: "'Mulish', sans-serif",
+  fontFamily: "'Inter', sans-serif",
   fontWeight: 600,
   fontSize: '0.8rem',
   color: 'var(--cs-muted)',
@@ -826,9 +1066,9 @@ const aLabelStyle: React.CSSProperties = {
 const aBtnStyle: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
   padding: '0.6rem 1.25rem',
-  background: 'linear-gradient(135deg, #1282AE 0%, #0A917A 60%, #4E8A1A 100%)',
+  background: '#2B7FFF',
   color: '#fff',
-  fontFamily: "'Mulish', sans-serif",
+  fontFamily: "'Inter', sans-serif",
   fontWeight: 700, fontSize: '0.875rem',
   border: 'none', borderRadius: '0.5rem', cursor: 'pointer',
 };
@@ -839,7 +1079,7 @@ const aSecBtnStyle: React.CSSProperties = {
   border: '1px solid var(--cs-ghost-border)',
   borderRadius: '0.5rem',
   color: 'var(--cs-text-2)',
-  fontFamily: "'Mulish', sans-serif",
+  fontFamily: "'Inter', sans-serif",
   fontWeight: 600, fontSize: '0.875rem',
   cursor: 'pointer',
 };
@@ -847,14 +1087,14 @@ const aSecBtnStyle: React.CSSProperties = {
 const tdStyle: React.CSSProperties = { padding: '0.75rem 0.875rem', verticalAlign: 'middle' };
 
 const sectionLabel: React.CSSProperties = {
-  fontFamily: "'Mulish', sans-serif", fontWeight: 700, fontSize: '0.75rem',
+  fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: '0.75rem',
   color: 'var(--cs-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.5rem',
 };
 
 const linkStyle: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center',
   padding: '0.3rem 0.875rem',
-  background: 'rgba(18,130,174,0.08)', border: '1px solid rgba(18,130,174,0.2)',
-  borderRadius: '100px', color: '#4DC8E8',
-  fontFamily: "'Mulish', sans-serif", fontSize: '0.8125rem', textDecoration: 'none',
+  background: 'rgba(43,127,255,0.08)', border: '1px solid rgba(43,127,255,0.2)',
+  borderRadius: '100px', color: '#60A5FA',
+  fontFamily: "'Inter', sans-serif", fontSize: '0.8125rem', textDecoration: 'none',
 };
