@@ -246,7 +246,7 @@ export default function Home() {
                     boxShadow: '0 0 30px rgba(43,127,255,0.35)',
                   }}
                 >
-                  Check Your HR Independence
+                  Check Your HR Score — Free
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </Link>
                 <Link
@@ -304,17 +304,38 @@ export default function Home() {
       </section>
 
       {/* ─── SECTION 02: THE PROBLEM ─── */}
-      <section className="py-28 relative" style={{ background: '#020812' }}>
-        <div className="max-w-7xl mx-auto px-6">
+      <section
+        className="py-28 relative overflow-hidden"
+        style={{ background: 'linear-gradient(180deg, #0A1F4D 0%, #0D2B6B 55%, #0A1F4D 100%)' }}
+      >
+        {/* Bright ambient glows */}
+        <div
+          className="absolute -top-24 left-1/2 w-[900px] h-[500px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(96,165,250,0.35) 0%, transparent 70%)', transform: 'translateX(-50%)' }}
+        />
+        <div
+          className="absolute bottom-0 right-0 w-[600px] h-[400px] rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(43,127,255,0.3) 0%, transparent 70%)' }}
+        />
+        <div className="max-w-7xl mx-auto px-6 relative">
           <RevealSection className="text-center mb-16">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: '#2B7FFF', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: '#7DD3FC', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               The Problem
             </p>
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#ffffff' }}>
               Is your founder still<br />
-              <span className="text-gradient">the HR department?</span>
+              <span
+                style={{
+                  background: 'linear-gradient(135deg, #7DD3FC 0%, #60A5FA 50%, #A5B4FC 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                the HR department?
+              </span>
             </h2>
-            <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(226,232,244,0.55)', fontFamily: "'Inter', sans-serif" }}>
+            <p className="text-lg max-w-2xl mx-auto" style={{ color: 'rgba(240,247,255,0.88)', fontFamily: "'Inter', sans-serif" }}>
               Growing businesses often don't have an HR problem alone. They have a founder-dependent people system.
             </p>
           </RevealSection>
@@ -323,17 +344,18 @@ export default function Home() {
             {SYMPTOMS.map((symptom, i) => (
               <RevealSection key={symptom} delay={i * 0.05}>
                 <div
-                  className="flex items-start gap-4 p-5 rounded-2xl transition-all duration-300 group"
+                  className="flex items-start gap-4 p-5 rounded-2xl transition-all duration-300 group hover:-translate-y-0.5"
                   style={{
-                    background: 'rgba(11,22,40,0.6)',
-                    border: '1px solid rgba(43,127,255,0.1)',
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)',
+                    border: '1px solid rgba(147,197,253,0.35)',
+                    boxShadow: '0 4px 24px rgba(10,31,77,0.35)',
                   }}
                 >
                   <div
-                    className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
-                    style={{ background: '#FF4444', boxShadow: '0 0 8px rgba(255,68,68,0.5)' }}
+                    className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0"
+                    style={{ background: '#FF6B6B', boxShadow: '0 0 12px rgba(255,107,107,0.9)' }}
                   />
-                  <p className="text-sm leading-relaxed" style={{ color: 'rgba(226,232,244,0.7)', fontFamily: "'Inter', sans-serif" }}>
+                  <p className="text-sm leading-relaxed font-medium" style={{ color: 'rgba(255,255,255,0.95)', fontFamily: "'Inter', sans-serif" }}>
                     {symptom}
                   </p>
                 </div>
@@ -345,14 +367,15 @@ export default function Home() {
             <div
               className="rounded-2xl p-10 text-center"
               style={{
-                background: 'linear-gradient(135deg, rgba(43,127,255,0.08) 0%, rgba(11,22,40,0.8) 100%)',
-                border: '1px solid rgba(43,127,255,0.2)',
+                background: 'linear-gradient(135deg, #2B7FFF 0%, #1A6AFF 55%, #6366F1 100%)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: '0 12px 60px rgba(43,127,255,0.45)',
               }}
             >
               <p className="text-2xl sm:text-3xl font-bold text-white mb-3" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 That's not an HR system.
               </p>
-              <p className="text-2xl sm:text-3xl font-bold text-gradient-blue" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              <p className="text-2xl sm:text-3xl font-extrabold" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#FDE68A' }}>
                 That's HR dependency.
               </p>
             </div>
@@ -965,7 +988,7 @@ export default function Home() {
                 className="inline-flex items-center gap-2 px-7 py-4 rounded-xl text-base font-semibold"
                 style={{ background: '#2B7FFF', color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: '0 0 25px rgba(43,127,255,0.3)' }}
               >
-                Check Your HR Independence →
+                Check Your HR Score — Free →
               </Link>
             </RevealSection>
 
@@ -1147,7 +1170,7 @@ export default function Home() {
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-semibold"
                   style={{ background: '#2B7FFF', color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: '0 0 30px rgba(43,127,255,0.4)' }}
                 >
-                  Check Your HR Independence →
+                  Check Your HR Score — Free →
                 </Link>
                 <Link
                   href="/contact"

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   LogOut, Plus, Pencil, Trash2, Eye, Download, X, Loader2,
   Briefcase, Users, TrendingUp, Clock, CheckCircle2, Search,
-  ToggleLeft, ToggleRight, Shield, Lock, Eye as EyeIcon, EyeOff, ClipboardCheck, Mail, FileSpreadsheet, PhoneCall, CalendarCheck,
+  ToggleLeft, ToggleRight, Shield, Lock, Eye as EyeIcon, EyeOff, ClipboardCheck, Mail, FileSpreadsheet, PhoneCall, CalendarCheck, FileText, Bold, Italic, Heading2, Heading3, List, ListOrdered, Link2, Eraser, CheckCircle,
 } from 'lucide-react';
 
 // ── Types (camelCase — matches Drizzle output) ──────────────────────────────
@@ -33,6 +33,12 @@ interface HrCheck {
   primaryChallenge: string; message: string | null;
   status: 'new' | 'contacted' | 'scheduled' | 'closed';
   adminNotes: string | null; createdAt: string;
+}
+
+interface InsightRow {
+  id: number; title: string; slug: string;
+  status: 'draft' | 'published';
+  createdAt: string; updatedAt: string; publishedAt: string | null;
 }
 
 interface Stats {
@@ -65,7 +71,11 @@ const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }
 
 export function AdminDashboard() {
   const [authed, setAuthed] = useState<boolean | null>(null);
-  const [section, setSection] = useState<'hr' | 'jobs'>('hr');
+  const [section, setSection] = useState<'hr' | 'jobs' | 'insights'>('hr');
+  const [insights, setInsights] = useState<InsightRow[]>([]);
+  const [insightModal, setInsightModal] = useState<{ id: number | null } | null>(null);
+  const [insightDelete, setInsightDelete] = useState<{ id: number } | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [activeTab, setTab] = useState<'jobs' | 'applications'>('jobs');
   const [exporting, setExporting] = useState(false);
 
@@ -97,14 +107,15 @@ export function AdminDashboard() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [sRes, jRes, aRes, hRes] = await Promise.all([
+      const [sRes, jRes, aRes, hRes, iRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/jobs'),
         fetch('/api/admin/applications'),
         fetch('/api/admin/hr-checks'),
+        fetch('/api/admin/insights'),
       ]);
       if (sRes.status === 401 || jRes.status === 401) { setAuthed(false); return; }
-      const [sd, jd, ad, hd] = await Promise.all([sRes.json(), jRes.json(), aRes.json(), hRes.json()]);
+      const [sd, jd, ad, hd, id] = await Promise.all([sRes.json(), jRes.json(), aRes.json(), hRes.json(), iRes.json()]);
       setStats(sd.stats);
       setJobs((jd.jobs || []).map((j: Job) => ({
         ...j,
@@ -113,6 +124,7 @@ export function AdminDashboard() {
       })));
       setApps(ad.applications || []);
       setHrChecks(hd.hrChecks || []);
+      setInsights(id.insights || []);
       setAuthed(true);
     } catch {
       setAuthed(false);
@@ -149,7 +161,7 @@ export function AdminDashboard() {
 
   const handleLogout = async () => {
     await fetch('/api/admin/logout', { method: 'POST' });
-    setAuthed(false); setStats(null); setJobs([]); setApps([]); setHrChecks([]);
+    setAuthed(false); setStats(null); setJobs([]); setApps([]); setHrChecks([]); setInsights([]);
   };
 
   // ── Job CRUD ───────────────────────────────────────────────────────────
@@ -195,6 +207,42 @@ export function AdminDashboard() {
     const q = hrSearch.trim().toLowerCase();
     return !q || [h.name, h.company, h.email, h.primaryChallenge].some(v => v.toLowerCase().includes(q));
   });
+
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(t => (t && t.msg === msg ? null : t)), 3500);
+  };
+
+  const saveInsight = async (id: number | null, payload: { title: string; content: string; status: 'draft' | 'published' }): Promise<string | null> => {
+    try {
+      const res = await fetch(id ? `/api/admin/insights/${id}` : '/api/admin/insights', {
+        method: id ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return data.error || 'Could not save the insight. Please try again.';
+      setInsightModal(null);
+      showToast(payload.status === 'published' ? 'Insight published successfully.' : 'Insight saved as draft.');
+      fetchData();
+      return null;
+    } catch {
+      return 'Network error. Please try again.';
+    }
+  };
+
+  const deleteInsight = async (id: number) => {
+    try {
+      const res = await fetch(`/api/admin/insights/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setInsightDelete(null);
+      showToast('Insight deleted successfully.');
+      fetchData();
+    } catch {
+      setInsightDelete(null);
+      showToast('Could not delete the insight. Please try again.', 'error');
+    }
+  };
 
   const exportExcel = async () => {
     setExporting(true);
@@ -431,6 +479,7 @@ export function AdminDashboard() {
           {([
             { key: 'hr',   label: 'HR Independence Checks', icon: ClipboardCheck, badge: stats?.new_hr_checks ?? 0 },
             { key: 'jobs', label: 'Jobs',                   icon: Briefcase,      badge: stats?.pending_applications ?? 0 },
+            { key: 'insights', label: 'Insights',           icon: FileText,       badge: 0 },
           ] as const).map(item => {
             const active = section === item.key;
             return (
@@ -468,10 +517,10 @@ export function AdminDashboard() {
         {/* Section header */}
         <div style={{ marginBottom: '1.5rem' }}>
           <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '1.5rem', color: 'var(--cs-text)', margin: 0 }}>
-            {section === 'hr' ? 'HR Independence Checks' : 'Jobs'}
+            {section === 'hr' ? 'HR Independence Checks' : section === 'jobs' ? 'Jobs' : 'Insights'}
           </h1>
           <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', color: 'var(--cs-light)', margin: '0.25rem 0 0' }}>
-            {section === 'hr' ? 'Requests submitted through the Contact page.' : 'Manage job postings and review candidate applications.'}
+            {section === 'hr' ? 'Requests submitted through the Contact page.' : section === 'jobs' ? 'Manage job postings and review candidate applications.' : 'Create, manage and publish HR insights and articles.'}
           </p>
         </div>
 
@@ -482,6 +531,13 @@ export function AdminDashboard() {
             <StatCard icon={Mail}           label="New"            value={hrChecks.filter(h => h.status === 'new').length}       color="#60A5FA" />
             <StatCard icon={PhoneCall}      label="Contacted"      value={hrChecks.filter(h => h.status === 'contacted').length} color="#FCD34D" />
             <StatCard icon={CalendarCheck}  label="Scheduled"      value={hrChecks.filter(h => h.status === 'scheduled').length} color="#6EE7B7" />
+          </div>
+        )}
+        {section === 'insights' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+            <StatCard icon={FileText}    label="Total Insights" value={insights.length}                                       color="#60A5FA" />
+            <StatCard icon={CheckCircle} label="Published"      value={insights.filter(i => i.status === 'published').length} color="#6EE7B7" />
+            <StatCard icon={Pencil}      label="Drafts"         value={insights.filter(i => i.status === 'draft').length}     color="#FCD34D" />
           </div>
         )}
         {stats && section === 'jobs' && (
@@ -512,6 +568,64 @@ export function AdminDashboard() {
         )}
 
         {loading && <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--cs-light)' }}><Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /></div>}
+
+        {/* Insights Section */}
+        {!loading && section === 'insights' && (
+          <div>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginBottom: '1.25rem' }}>
+              <button onClick={() => setInsightModal({ id: null })} style={{ ...aBtnStyle, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Plus size={16} /> Add Insight
+              </button>
+            </div>
+
+            {insights.length === 0
+              ? <EmptyState icon={FileText} title="No insights yet" sub="Click '+ Add Insight' to write your first article." />
+              : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: "'Inter', sans-serif", fontSize: '0.875rem' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid var(--cs-border)' }}>
+                        {['Title', 'Status', 'Created', 'Updated', 'Actions'].map(h => (
+                          <th key={h} style={{ padding: '0.625rem 0.875rem', textAlign: 'left', color: 'var(--cs-light)', fontWeight: 700, fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {insights.map(i => {
+                        const published = i.status === 'published';
+                        const fmt = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                        return (
+                          <tr key={i.id} style={{ borderBottom: '1px solid var(--cs-border)', transition: 'background 0.15s' }}
+                            onMouseEnter={e => (e.currentTarget as HTMLTableRowElement).style.background = 'rgba(255,255,255,0.02)'}
+                            onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'}
+                          >
+                            <td style={{ ...tdStyle, maxWidth: '420px' }}>
+                              <div style={{ fontWeight: 600, color: 'var(--cs-text)' }}>{i.title}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--cs-light)' }}>/insights/{i.slug}</div>
+                            </td>
+                            <td style={tdStyle}>
+                              <span style={{ padding: '0.2rem 0.65rem', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 700, background: published ? 'rgba(16,185,129,0.12)' : 'rgba(234,179,8,0.12)', color: published ? '#6EE7B7' : '#FCD34D' }}>
+                                {published ? 'Published' : 'Draft'}
+                              </span>
+                            </td>
+                            <td style={{ ...tdStyle, color: 'var(--cs-light)', whiteSpace: 'nowrap' }}>{fmt(i.createdAt)}</td>
+                            <td style={{ ...tdStyle, color: 'var(--cs-light)', whiteSpace: 'nowrap' }}>{fmt(i.updatedAt)}</td>
+                            <td style={tdStyle}>
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <IconBtn icon={Pencil} onClick={() => setInsightModal({ id: i.id })}     title="Edit"   color="#60A5FA" />
+                                <IconBtn icon={Trash2} onClick={() => setInsightDelete({ id: i.id })}    title="Delete" color="#F87171" />
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }
+          </div>
+        )}
 
         {/* HR Independence Checks Tab */}
         {!loading && section === 'hr' && (
@@ -712,6 +826,26 @@ export function AdminDashboard() {
       {appModal && (
         <AppDetailModal app={appModal} onClose={() => setAppModal(null)} onStatusChange={(s, n) => updateAppStatus(appModal.id, s, n)} />
       )}
+      {insightModal && (
+        <InsightFormModal id={insightModal.id} onClose={() => setInsightModal(null)} onSave={saveInsight} />
+      )}
+      {insightDelete && (
+        <ConfirmModal title="Delete this insight?" message="This action cannot be undone." onConfirm={() => deleteInsight(insightDelete.id)} onCancel={() => setInsightDelete(null)} />
+      )}
+      {toast && (
+        <div role="status" style={{
+          position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 300,
+          display: 'flex', alignItems: 'center', gap: '0.6rem',
+          padding: '0.8rem 1.1rem', borderRadius: '0.75rem',
+          background: toast.type === 'success' ? 'rgba(16,185,129,0.14)' : 'rgba(239,68,68,0.14)',
+          border: `1px solid ${toast.type === 'success' ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}`,
+          color: toast.type === 'success' ? '#6EE7B7' : '#FCA5A5',
+          fontFamily: "'Inter', sans-serif", fontSize: '0.875rem', fontWeight: 600,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)',
+        }}>
+          {toast.type === 'success' ? <CheckCircle size={16} /> : <Shield size={16} />} {toast.msg}
+        </div>
+      )}
       {hrModal && (
         <HrCheckDetailModal check={hrModal} onClose={() => setHrModal(null)} onSave={(st, n) => updateHrCheck(hrModal.id, st, n)} onDelete={() => setHrDelete({ id: hrModal.id })} />
       )}
@@ -816,6 +950,177 @@ function AppDetailModal({ app, onClose, onStatusChange }: { app: Application; on
   );
 }
 
+// ── Insight editor ──────────────────────────────────────────────────────────
+
+const PASTE_ALLOWED = new Set(['P', 'BR', 'H2', 'H3', 'H4', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'A', 'BLOCKQUOTE']);
+
+// Keep pasted content to basic formatting: drop styles/classes/scripts, unwrap unknown tags, H1 -> H2.
+function cleanPastedHtml(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const walk = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) return (node.textContent || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+    const el = node as HTMLElement;
+    const tag = el.tagName;
+    if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'EMBED'].includes(tag)) return '';
+    const inner = Array.from(el.childNodes).map(walk).join('');
+    if (tag === 'H1') return `<h2>${inner}</h2>`;
+    if (tag === 'DIV') return `<p>${inner}</p>`;
+    if (!PASTE_ALLOWED.has(tag)) return inner;
+    if (tag === 'A') {
+      const href = el.getAttribute('href') || '';
+      return /^(https?:|mailto:)/i.test(href) ? `<a href="${href.replace(/"/g, '&quot;')}">${inner}</a>` : inner;
+    }
+    const t = tag.toLowerCase();
+    return tag === 'BR' ? '<br>' : `<${t}>${inner}</${t}>`;
+  };
+  return walk(doc.body);
+}
+
+function RichTextEditor({ initialHtml, onChange, placeholder }: { initialHtml: string; onChange: (html: string) => void; placeholder: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current) ref.current.innerHTML = initialHtml;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const emit = () => onChange(ref.current?.innerHTML || '');
+  const run = (cmd: string, value?: string) => {
+    ref.current?.focus();
+    document.execCommand(cmd, false, value);
+    emit();
+  };
+  const addLink = () => {
+    const url = window.prompt('Link URL (https://…)');
+    if (url && /^(https?:\/\/|mailto:)/i.test(url.trim())) run('createLink', url.trim());
+  };
+
+  const tools: { title: string; icon: React.ElementType; action: () => void }[] = [
+    { title: 'Bold',          icon: Bold,        action: () => run('bold') },
+    { title: 'Italic',        icon: Italic,      action: () => run('italic') },
+    { title: 'Heading',       icon: Heading2,    action: () => run('formatBlock', 'h2') },
+    { title: 'Sub-heading',   icon: Heading3,    action: () => run('formatBlock', 'h3') },
+    { title: 'Bullet list',   icon: List,        action: () => run('insertUnorderedList') },
+    { title: 'Numbered list', icon: ListOrdered, action: () => run('insertOrderedList') },
+    { title: 'Link',          icon: Link2,       action: addLink },
+    { title: 'Clear formatting (paragraph)', icon: Eraser, action: () => { run('formatBlock', 'p'); run('removeFormat'); } },
+  ];
+
+  return (
+    <div style={{ border: '1px solid var(--cs-input-border)', borderRadius: '0.5rem', overflow: 'hidden', background: 'var(--cs-input-bg)' }}>
+      <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', padding: '0.5rem', borderBottom: '1px solid var(--cs-border)', background: 'rgba(255,255,255,0.02)' }}>
+        {tools.map(t => (
+          <button key={t.title} type="button" title={t.title} aria-label={t.title}
+            onMouseDown={e => e.preventDefault()} onClick={t.action}
+            style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid transparent', borderRadius: '0.4rem', color: 'var(--cs-text-2)', cursor: 'pointer' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(43,127,255,0.14)'; e.currentTarget.style.color = '#60A5FA'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--cs-text-2)'; }}
+          >
+            <t.icon size={15} />
+          </button>
+        ))}
+      </div>
+      <div
+        ref={ref}
+        className="insight-content insight-editor"
+        contentEditable
+        suppressContentEditableWarning
+        role="textbox"
+        aria-multiline="true"
+        aria-label="Insight Content"
+        data-placeholder={placeholder}
+        onInput={emit}
+        onBlur={emit}
+        onPaste={e => {
+          const html = e.clipboardData.getData('text/html');
+          if (!html) return; // plain text pastes normally
+          e.preventDefault();
+          document.execCommand('insertHTML', false, cleanPastedHtml(html));
+          emit();
+        }}
+        style={{ minHeight: '320px', maxHeight: '52vh', overflowY: 'auto', padding: '1rem 1.125rem', outline: 'none' }}
+      />
+    </div>
+  );
+}
+
+function InsightFormModal({ id, onClose, onSave }: {
+  id: number | null;
+  onClose: () => void;
+  onSave: (id: number | null, payload: { title: string; content: string; status: 'draft' | 'published' }) => Promise<string | null>;
+}) {
+  const [loading, setLoading]   = useState(id !== null);
+  const [title, setTitle]       = useState('');
+  const [content, setContent]   = useState('');
+  const [initial, setInitial]   = useState('');
+  const [saving, setSaving]     = useState<'draft' | 'published' | null>(null);
+  const [errors, setErrors]     = useState<{ title?: string; content?: string; form?: string }>({});
+
+  useEffect(() => {
+    if (id === null) return;
+    fetch(`/api/admin/insights/${id}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => { setTitle(d.insight.title); setContent(d.insight.content); setInitial(d.insight.content); })
+      .catch(() => setErrors({ form: 'Could not load this insight. Please close and try again.' }))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const plain = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim();
+
+  const submit = async (status: 'draft' | 'published') => {
+    const next: typeof errors = {};
+    if (!title.trim())      next.title   = 'Please enter an insight heading.';
+    if (!plain(content))    next.content = 'Please enter insight content.';
+    setErrors(next);
+    if (next.title || next.content) return;
+    setSaving(status);
+    const err = await onSave(id, { title: title.trim(), content, status });
+    setSaving(null);
+    if (err) setErrors({ form: err });
+  };
+
+  const fieldErr = (m?: string) => m ? <div style={{ color: '#F87171', fontFamily: "'Inter', sans-serif", fontSize: '0.8125rem', marginTop: '0.375rem' }}>{m}</div> : null;
+
+  return (
+    <ModalShell onClose={onClose} xl>
+      <ModalHeader title={id === null ? 'Add Insight' : 'Edit Insight'} sub={id === null ? 'Create a new insight' : undefined} onClose={onClose} />
+      <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '74vh' }}>
+        {errors.form && <ErrBanner msg={errors.form} />}
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--cs-light)' }}><Loader2 size={22} style={{ animation: 'spin 1s linear infinite' }} /></div>
+        ) : (
+          <>
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={aLabelStyle}>Insight Heading</label>
+              <input
+                type="text" value={title} onChange={e => { setTitle(e.target.value); setErrors(p => ({ ...p, title: undefined })); }}
+                placeholder="Enter your insight heading" maxLength={255} autoFocus
+                style={{ ...aInputStyle, width: '100%', boxSizing: 'border-box' as const, fontSize: '1.0625rem', fontWeight: 600, borderColor: errors.title ? 'rgba(239,68,68,0.5)' : undefined }}
+              />
+              {fieldErr(errors.title)}
+            </div>
+            <div>
+              <label style={aLabelStyle}>Insight Content</label>
+              <RichTextEditor initialHtml={initial} onChange={html => { setContent(html); setErrors(p => ({ ...p, content: undefined })); }} placeholder="Write your insight here..." />
+              {fieldErr(errors.content)}
+            </div>
+          </>
+        )}
+      </div>
+      <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--cs-border)', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+        <button onClick={onClose} disabled={saving !== null} style={aSecBtnStyle}>Cancel</button>
+        <button onClick={() => submit('draft')} disabled={loading || saving !== null} style={{ ...aSecBtnStyle, opacity: loading || saving ? 0.6 : 1 }}>
+          {saving === 'draft' ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</> : 'Save Draft'}
+        </button>
+        <button onClick={() => submit('published')} disabled={loading || saving !== null} style={{ ...aBtnStyle, opacity: loading || saving ? 0.6 : 1 }}>
+          {saving === 'published' ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Publishing…</> : 'Publish'}
+        </button>
+      </div>
+    </ModalShell>
+  );
+}
+
 // ── HR Independence Check Detail Modal ─────────────────────────────────────
 
 function HrCheckDetailModal({ check, onClose, onSave, onDelete }: { check: HrCheck; onClose: () => void; onSave: (s: string, n?: string) => void; onDelete: () => void }) {
@@ -915,12 +1220,12 @@ function EmptyState({ icon: Icon, title, sub }: { icon: React.ElementType; title
   );
 }
 
-function ModalShell({ children, onClose, wide }: { children: React.ReactNode; onClose: () => void; wide?: boolean }) {
+function ModalShell({ children, onClose, wide, xl }: { children: React.ReactNode; onClose: () => void; wide?: boolean; xl?: boolean }) {
   useEffect(() => { document.body.style.overflow = 'hidden'; return () => { document.body.style.overflow = ''; }; }, []);
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(2,8,18,0.88)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem', overflowY: 'auto' }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ width: '100%', maxWidth: wide ? '700px' : '480px', background: 'var(--cs-card)', border: '1px solid var(--cs-border)', borderRadius: '1.25rem', overflow: 'hidden', marginTop: '1rem' }}>
+      <div style={{ width: '100%', maxWidth: xl ? '960px' : wide ? '700px' : '480px', background: 'var(--cs-card)', border: '1px solid var(--cs-border)', borderRadius: '1.25rem', overflow: 'hidden', marginTop: '1rem' }}>
         {children}
       </div>
     </div>

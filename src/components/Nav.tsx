@@ -35,13 +35,22 @@ export default function Nav() {
   return (
     <>
       <motion.header
-        className="fixed top-0 left-0 right-0 z-50 px-4 pt-4"
+        className="fixed top-0 left-0 right-0 z-50 px-4 pt-4 pb-3 transition-all duration-500"
+        style={{
+          // soft dark fade behind the floating logo so it stays legible over page content
+          background: scrolled ? 'linear-gradient(180deg, rgba(2,8,18,0.92) 0%, rgba(2,8,18,0.6) 70%, transparent 100%)' : 'transparent',
+        }}
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
+        <div className="mx-auto max-w-7xl flex items-center gap-4">
+        {/* Logo — sits outside the menu box */}
+        <Link href="/" className="flex-shrink-0 flex items-center" aria-label="Spark Pro home">
+          <img src="/logo.png" alt="Spark Pro" style={{ height: 64, width: "auto" }} />
+        </Link>
         <div
-          className="mx-auto max-w-7xl rounded-2xl transition-all duration-500"
+          className="flex-1 rounded-2xl transition-all duration-500"
           style={{
             background: scrolled
               ? 'rgba(5, 10, 20, 0.85)'
@@ -51,11 +60,7 @@ export default function Nav() {
             boxShadow: scrolled ? '0 8px 40px rgba(0,0,0,0.4)' : 'none',
           }}
         >
-          <div className="flex items-center justify-between px-6 py-4">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-<img src="/logo.png" alt="Spark Pro" style={{ height: 64, width: "auto" }} />
-</Link>
+          <div className="flex items-center justify-between px-6 py-3">
 
             {/* Desktop Links */}
             <nav className="hidden lg:flex items-center gap-1">
@@ -107,7 +112,7 @@ export default function Nav() {
                   (e.target as HTMLElement).style.boxShadow = '0 0 20px rgba(43,127,255,0.3)';
                 }}
               >
-                Check Your HR Independence
+                Check Your HR Score — Free
               </Link>
             </div>
 
@@ -137,6 +142,7 @@ export default function Nav() {
               />
             </button>
           </div>
+        </div>
         </div>
       </motion.header>
 
@@ -189,7 +195,7 @@ export default function Nav() {
                   className="block w-full text-center py-4 rounded-xl text-base font-semibold text-white"
                   style={{ background: '#2B7FFF', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                 >
-                  Check Your HR Independence
+                  Check Your HR Score — Free
                 </Link>
               </motion.div>
             </motion.div>

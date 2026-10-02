@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, useInView as fmUseInView } from 'framer-motion';
+import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion, useInView as fmUseInView } from 'framer-motion';
 
 function RevealSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -78,8 +79,8 @@ const nextSteps = [
 ];
 
 export default function Contact() {
+  const router = useRouter();
   const [form, setForm] = useState<FormState>(initialForm);
-  const [submitted, setSubmitted] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -89,23 +90,6 @@ export default function Contact() {
   ) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
-
-  // Closing the popup refreshes the page so the form starts fresh.
-  function closeSuccess() {
-    window.location.reload();
-  }
-
-  useEffect(() => {
-    if (!submitted) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeSuccess(); };
-    document.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [submitted]);
 
   // Dropdown answers are stored as the readable option text, not the slug value.
   function optionLabel(id: keyof FormState) {
@@ -133,8 +117,8 @@ export default function Contact() {
         setError(data.error || 'Something went wrong. Please try again.');
         return;
       }
-      setForm(initialForm);
-      setSubmitted(true);
+      // Continue to the HR score landing page once the request is stored.
+      router.push('/hr-score');
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -362,87 +346,6 @@ export default function Contact() {
                   </p>
                 </form>
 
-              <AnimatePresence>
-                {submitted && (
-                  <motion.div
-                    key="success-popup"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="fixed inset-0 z-[100] flex items-center justify-center px-4"
-                    style={{ background: 'rgba(2,8,18,0.8)', backdropFilter: 'blur(8px)' }}
-                    onClick={closeSuccess}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="success-title"
-                  >
-                    <motion.div
-                      initial={{ opacity: 0, y: 20, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.98 }}
-                      transition={{ duration: 0.3, ease: 'easeOut' }}
-                      className="relative w-full max-w-md rounded-2xl p-8 md:p-10 text-center"
-                      style={{
-                        background: '#0B1628',
-                        border: '1px solid rgba(43,127,255,0.25)',
-                        boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(43,127,255,0.12)',
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <button
-                        type="button"
-                        onClick={closeSuccess}
-                        aria-label="Close"
-                        className="absolute top-4 right-4 w-9 h-9 rounded-lg flex items-center justify-center transition-colors duration-200"
-                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(226,232,244,0.7)' }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                      </button>
-
-                      <p
-                        className="text-xs font-semibold tracking-widest uppercase mb-6"
-                        style={{ color: '#2B7FFF', fontFamily: 'Inter, sans-serif' }}
-                      >
-                        Request Your HR Independence Check
-                      </p>
-                      <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-                        style={{ background: 'rgba(43,127,255,0.15)' }}
-                      >
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                      <h3
-                        id="success-title"
-                        className="text-2xl font-bold mb-3"
-                        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', color: '#E2E8F4' }}
-                      >
-                        Thank you — we've received your request.
-                      </h3>
-                      <p
-                        className="text-base mb-8"
-                        style={{ color: 'rgba(226,232,244,0.65)', fontFamily: 'Inter, sans-serif' }}
-                      >
-                        We'll review your submission within 1 business day and be in touch to schedule your
-                        discovery call.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={closeSuccess}
-                        className="w-full py-3 rounded-xl font-semibold text-white transition-all duration-200 hover:opacity-90"
-                        style={{ background: '#2B7FFF', fontFamily: 'Inter, sans-serif', fontSize: '0.95rem' }}
-                      >
-                        Close
-                      </button>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
             {/* Right side */}

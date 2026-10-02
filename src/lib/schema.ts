@@ -68,3 +68,20 @@ export const hrChecks = sparkSchema.table('hr_checks', {
 
 export type HrCheck    = typeof hrChecks.$inferSelect;
 export type NewHrCheck = typeof hrChecks.$inferInsert;
+
+// Insights (HR articles) managed from the admin panel and shown on /insights.
+// `content` holds sanitized HTML. Extra fields (author, category, featured image...)
+// can be added later without touching existing columns.
+export const insights = sparkSchema.table('insights', {
+  id:          serial('id').primaryKey(),
+  title:       varchar('title', { length: 255 }).notNull(),
+  slug:        varchar('slug',  { length: 300 }).notNull().unique(),
+  content:     text('content').notNull(),
+  status:      varchar('status', { length: 20 }).notNull().default('draft'), // 'draft' | 'published'
+  createdAt:   timestamp('created_at',   { withTimezone: true }).defaultNow().notNull(),
+  updatedAt:   timestamp('updated_at',   { withTimezone: true }).defaultNow().notNull(),
+  publishedAt: timestamp('published_at', { withTimezone: true }),
+});
+
+export type Insight    = typeof insights.$inferSelect;
+export type NewInsight = typeof insights.$inferInsert;

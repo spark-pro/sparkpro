@@ -287,7 +287,7 @@ export default function ForSMEs() {
                 fontFamily: 'Plus Jakarta Sans, sans-serif',
               }}
             >
-              Start With Your HR Health Check →
+              Check Your HR Score — Free →
             </Link>
             <a
               href="#five-stages"
@@ -681,7 +681,7 @@ export default function ForSMEs() {
                 boxShadow: '0 8px 32px rgba(43,127,255,0.3)',
               }}
             >
-              Start With Your HR Health Check →
+              Check Your HR Score — Free →
             </Link>
           </RevealSection>
         </div>

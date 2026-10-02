@@ -407,7 +407,7 @@ export default function Solutions() {
                 className="inline-flex items-center gap-2 px-7 py-4 rounded-xl text-base font-semibold"
                 style={{ background: '#2B7FFF', color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: '0 0 25px rgba(43,127,255,0.3)' }}
               >
-                Start Your HR Health Check →
+                Check Your HR Score — Free →
               </Link>
             </RevealSection>
 
@@ -474,7 +474,7 @@ export default function Solutions() {
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-base font-semibold"
                   style={{ background: '#2B7FFF', color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif", boxShadow: '0 0 30px rgba(43,127,255,0.4)' }}
                 >
-                  Start Your HR Health Check →
+                  Check Your HR Score — Free →
                 </Link>
                 <Link
                   href="/how-we-work"
