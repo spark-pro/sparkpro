@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { Mail, Phone, MapPin, Clock, Linkedin, Facebook, Instagram, MessageCircle } from 'lucide-react';
+import { CONTACT } from '@/lib/contactInfo';
 
 const solutions = [
   { label: 'HR Independence Audit', href: '/solutions' },
@@ -37,6 +39,41 @@ export default function Footer() {
             </p>
             <div className="inline-block px-4 py-2 rounded-lg text-xs font-medium" style={{ background: 'rgba(43,127,255,0.1)', color: '#60A5FA', border: '1px solid rgba(43,127,255,0.2)', fontFamily: "'Inter', sans-serif" }}>
               Build HR. Reduce Founder Dependency.
+            </div>
+
+            <ul className="mt-8 space-y-3">
+              {[
+                { Icon: Mail,   text: CONTACT.email,        href: `mailto:${CONTACT.email}` },
+                { Icon: Phone,  text: CONTACT.phoneDisplay, href: CONTACT.phoneHref },
+                { Icon: MapPin, text: CONTACT.addressShort, href: undefined },
+                { Icon: Clock,  text: `Mon–Sat, ${CONTACT.hoursTime}`, href: undefined },
+              ].map(({ Icon, text, href }) => (
+                <li key={text} className="flex items-start gap-3 text-sm" style={{ color: 'rgba(226,232,244,0.55)', fontFamily: "'Inter', sans-serif" }}>
+                  <Icon size={14} className="mt-1 flex-shrink-0" style={{ color: '#2B7FFF' }} />
+                  {href ? <a href={href} className="hover:text-[#E2E8F4] transition-colors">{text}</a> : <span>{text}</span>}
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex gap-3 mt-6">
+              {[
+                { href: CONTACT.social.linkedin,  Icon: Linkedin,       label: 'LinkedIn' },
+                { href: CONTACT.social.facebook,  Icon: Facebook,       label: 'Facebook' },
+                { href: CONTACT.social.instagram, Icon: Instagram,      label: 'Instagram' },
+                { href: CONTACT.whatsappHref,     Icon: MessageCircle,  label: 'WhatsApp' },
+              ].map(({ href, Icon, label }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 hover:text-[#60A5FA] hover:border-[rgba(43,127,255,0.4)]"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(226,232,244,0.6)' }}
+                >
+                  <Icon size={16} />
+                </a>
+              ))}
             </div>
           </div>
 

@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Mail, Phone, MapPin, Clock, MessageCircle } from 'lucide-react';
+import { CONTACT } from '@/lib/contactInfo';
 import { motion, useInView as fmUseInView } from 'framer-motion';
 
 function RevealSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
@@ -397,74 +399,59 @@ export default function Contact() {
                   Direct Contact
                 </h3>
                 <div className="space-y-4">
-                  <a
-                    href="mailto:hello@sparkpro.in"
-                    className="flex items-center gap-3 group"
-                  >
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: 'rgba(43,127,255,0.10)' }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="4" width="20" height="16" rx="2" />
-                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                      </svg>
-                    </div>
-                    <span
-                      className="text-sm group-hover:underline"
-                      style={{ color: '#E2E8F4', fontFamily: 'Inter, sans-serif' }}
-                    >
-                      hello@sparkpro.in
-                    </span>
-                  </a>
-                  <a
-                    href="tel:+919800000000"
-                    className="flex items-center gap-3 group"
-                  >
-                    <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: 'rgba(43,127,255,0.10)' }}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2B7FFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.84 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6.4 6.4l1.06-1.06a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-                      </svg>
-                    </div>
-                    <span
-                      className="text-sm group-hover:underline"
-                      style={{ color: '#E2E8F4', fontFamily: 'Inter, sans-serif' }}
-                    >
-                      +91 98000 00000
-                    </span>
-                  </a>
+                  {[
+                    { Icon: Mail,   label: 'Email',          value: CONTACT.email,                              href: `mailto:${CONTACT.email}` },
+                    { Icon: Phone,  label: 'Phone',          value: CONTACT.phoneDisplay,                       href: CONTACT.phoneHref },
+                    { Icon: MapPin, label: 'Office Address', value: CONTACT.address,                            href: undefined },
+                    { Icon: Clock,  label: 'Business Hours', value: `${CONTACT.hours}\n${CONTACT.hoursTime}`,   href: undefined },
+                  ].map(({ Icon, label, value, href }) => {
+                    const inner = (
+                      <>
+                        <div
+                          className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{ background: 'rgba(43,127,255,0.10)' }}
+                        >
+                          <Icon size={16} color="#2B7FFF" strokeWidth={1.8} />
+                        </div>
+                        <div>
+                          <p
+                            className="text-xs font-semibold tracking-widest uppercase mb-0.5"
+                            style={{ color: 'rgba(226,232,244,0.4)', fontFamily: 'Inter, sans-serif' }}
+                          >
+                            {label}
+                          </p>
+                          <p
+                            className={`text-sm ${href ? 'group-hover:underline' : ''}`}
+                            style={{ color: '#E2E8F4', fontFamily: 'Inter, sans-serif', whiteSpace: 'pre-line' }}
+                          >
+                            {value}
+                          </p>
+                        </div>
+                      </>
+                    );
+                    return href ? (
+                      <a key={label} href={href} className="flex items-start gap-3 group">{inner}</a>
+                    ) : (
+                      <div key={label} className="flex items-start gap-3">{inner}</div>
+                    );
+                  })}
                 </div>
-              </div>
 
-              {/* Location */}
-              <div
-                className="rounded-xl p-5"
-                style={{
-                  background: 'rgba(11,22,40,0.7)',
-                  border: '1px solid rgba(43,127,255,0.08)',
-                }}
-              >
-                <p
-                  className="text-xs font-semibold tracking-widest uppercase mb-2"
-                  style={{ color: 'rgba(226,232,244,0.4)', fontFamily: 'Inter, sans-serif' }}
+                {/* WhatsApp */}
+                <a
+                  href={CONTACT.whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2.5 mt-6 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5"
+                  style={{
+                    background: 'linear-gradient(135deg, #128C7E, #25D366)',
+                    fontFamily: 'Inter, sans-serif',
+                    boxShadow: '0 4px 20px rgba(37,211,102,0.3)',
+                  }}
                 >
-                  Based in
-                </p>
-                <p
-                  className="text-sm font-medium"
-                  style={{ color: '#E2E8F4', fontFamily: 'Inter, sans-serif' }}
-                >
-                  Tamil Nadu, India
-                </p>
-                <p
-                  className="text-sm mt-1"
-                  style={{ color: 'rgba(226,232,244,0.55)', fontFamily: 'Inter, sans-serif' }}
-                >
-                  Serving businesses across India
-                </p>
+                  <MessageCircle size={18} />
+                  Chat on WhatsApp
+                </a>
               </div>
             </div>
           </div>
