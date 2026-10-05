@@ -216,3 +216,7 @@ select option:checked {
   color: rgba(226, 232, 244, 0.35);
   pointer-events: none;
 }
+
+.insight-content.job-description { font-size: 0.9375rem; line-height: 1.8; color: var(--cs-text-2); }
+.insight-content.job-description h2 { font-size: 1.2rem; margin-top: 1.4em; }
+.insight-content.job-description h3 { font-size: 1.05rem; margin-top: 1.2em; }

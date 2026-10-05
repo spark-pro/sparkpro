@@ -105,7 +105,11 @@ export function JobDetail({ jobId }: { jobId: number }) {
           {/* ── Content ─────────────────────────────────────────── */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem', marginTop: '2.5rem' }}>
             <Section title="About This Role">
-              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.9375rem', color: 'var(--cs-text-2)', lineHeight: 1.8 }}>{job.description}</p>
+              <div
+                className="insight-content job-description"
+                // Sanitized rich text (allow-list of formatting tags) from the API
+                dangerouslySetInnerHTML={{ __html: job.description }}
+              />
             </Section>
 
             {job.requirements?.length > 0 && (

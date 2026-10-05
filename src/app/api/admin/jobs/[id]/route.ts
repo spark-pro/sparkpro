@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { jobs } from '@/lib/schema';
 import { requireAdmin } from '@/lib/auth';
+import { sanitizeContent, toPlainText } from '@/lib/insights';
 import { eq } from 'drizzle-orm';
 
 export async function GET(
@@ -41,14 +42,15 @@ export async function PUT(
     const body = await request.json();
     const { title, location, experience, salary_range, description, requirements, benefits, is_active } = body;
 
-    if (!title || !location || !experience || !description) {
+    const cleanDescription = sanitizeContent(typeof description === 'string' ? description : '');
+    if (!title || !location || !experience || !toPlainText(cleanDescription)) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     await db.update(jobs).set({
       title, location, experience,
       salaryRange:  salary_range || null,
-      description,
+      description:  cleanDescription,
       requirements: Array.isArray(requirements) ? requirements : [],
       benefits:     Array.isArray(benefits)     ? benefits     : [],
       isActive:     Boolean(is_active),

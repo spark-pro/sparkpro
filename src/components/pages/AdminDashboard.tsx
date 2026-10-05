@@ -5,6 +5,7 @@ import {
   LogOut, Plus, Pencil, Trash2, Eye, Download, X, Loader2,
   Briefcase, Users, TrendingUp, Clock, CheckCircle2, Search,
   ToggleLeft, ToggleRight, Shield, Lock, Eye as EyeIcon, EyeOff, ClipboardCheck, Mail, FileSpreadsheet, PhoneCall, CalendarCheck, FileText, Bold, Italic, Heading2, Heading3, List, ListOrdered, Link2, Eraser, CheckCircle,
+  Underline, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, Quote, Minus, Unlink, Undo2, Redo2, Subscript, Superscript, Code,
 } from 'lucide-react';
 
 // ── Types (camelCase — matches Drizzle output) ──────────────────────────────
@@ -869,7 +870,7 @@ function JobFormModal({ job, editing, onClose, onSave }: { job: Partial<Job>; ed
   const [err, setErr]     = useState('');
 
   const handleSave = async () => {
-    if (!form.title || !form.location || !form.experience || !form.description) { setErr('Title, location, experience, and description are required.'); return; }
+    if (!form.title || !form.location || !form.experience || !form.description.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/​/g, '').trim()) { setErr('Title, location, experience, and description are required.'); return; }
     setSav(true); setErr('');
     await onSave({ ...form, id: job.id });
     setSav(false);
@@ -890,7 +891,10 @@ function JobFormModal({ job, editing, onClose, onSave }: { job: Partial<Job>; ed
           <ModalField label="Experience Required *" value={form.experience}       onChange={v => setForm(p => ({ ...p, experience: v }))}  placeholder="e.g. 2–4 years" />
           <ModalField label="Salary Range"          value={form.salaryRange || ''} onChange={v => setForm(p => ({ ...p, salaryRange: v }))} placeholder="e.g. ₹6–10 LPA" />
         </FormGrid>
-        <ModalTextArea label="Job Description *" value={form.description} onChange={v => setForm(p => ({ ...p, description: v }))} placeholder="Describe the role…" rows={4} />
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={aLabelStyle}>Job Description *</label>
+          <RichTextEditor initialHtml={descriptionToHtml(job.description || '')} onChange={html => setForm(p => ({ ...p, description: html }))} placeholder="Describe the role…" minHeight="200px" />
+        </div>
         <DynamicList label="Requirements"     items={form.requirements as string[]} onAdd={() => addItem('requirements')} onUpdate={(i, v) => updateItem('requirements', i, v)} onRemove={i => removeItem('requirements', i)} placeholder="Add a requirement…" />
         <DynamicList label="Benefits & Perks" items={form.benefits     as string[]} onAdd={() => addItem('benefits')}    onUpdate={(i, v) => updateItem('benefits',     i, v)} onRemove={i => removeItem('benefits',     i)} placeholder="Add a benefit…" />
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '1rem', padding: '0.875rem 1rem', background: 'var(--cs-input-bg)', borderRadius: '0.5rem' }}>
@@ -950,9 +954,16 @@ function AppDetailModal({ app, onClose, onStatusChange }: { app: Application; on
   );
 }
 
+// Older job descriptions are plain text; show them in the editor as paragraphs.
+function descriptionToHtml(value: string): string {
+  if (/<\/?[a-z][\s\S]*>/i.test(value)) return value;
+  const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return value.split(/\n{2,}/).map(p => p.trim()).filter(Boolean).map(p => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('');
+}
+
 // ── Insight editor ──────────────────────────────────────────────────────────
 
-const PASTE_ALLOWED = new Set(['P', 'BR', 'H2', 'H3', 'H4', 'STRONG', 'B', 'EM', 'I', 'U', 'UL', 'OL', 'LI', 'A', 'BLOCKQUOTE']);
+const PASTE_ALLOWED = new Set(['P', 'BR', 'H2', 'H3', 'H4', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'STRIKE', 'DEL', 'SUB', 'SUP', 'CODE', 'UL', 'OL', 'LI', 'A', 'BLOCKQUOTE', 'HR']);
 
 // Keep pasted content to basic formatting: drop styles/classes/scripts, unwrap unknown tags, H1 -> H2.
 function cleanPastedHtml(html: string): string {
@@ -977,11 +988,12 @@ function cleanPastedHtml(html: string): string {
   return walk(doc.body);
 }
 
-function RichTextEditor({ initialHtml, onChange, placeholder }: { initialHtml: string; onChange: (html: string) => void; placeholder: string }) {
+function RichTextEditor({ initialHtml, onChange, placeholder, minHeight = '320px' }: { initialHtml: string; onChange: (html: string) => void; placeholder: string; minHeight?: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (ref.current) ref.current.innerHTML = initialHtml;
+    document.execCommand('defaultParagraphSeparator', false, 'p'); // Enter creates <p>, not <div>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -996,21 +1008,52 @@ function RichTextEditor({ initialHtml, onChange, placeholder }: { initialHtml: s
     if (url && /^(https?:\/\/|mailto:)/i.test(url.trim())) run('createLink', url.trim());
   };
 
-  const tools: { title: string; icon: React.ElementType; action: () => void }[] = [
-    { title: 'Bold',          icon: Bold,        action: () => run('bold') },
-    { title: 'Italic',        icon: Italic,      action: () => run('italic') },
-    { title: 'Heading',       icon: Heading2,    action: () => run('formatBlock', 'h2') },
-    { title: 'Sub-heading',   icon: Heading3,    action: () => run('formatBlock', 'h3') },
-    { title: 'Bullet list',   icon: List,        action: () => run('insertUnorderedList') },
-    { title: 'Numbered list', icon: ListOrdered, action: () => run('insertOrderedList') },
-    { title: 'Link',          icon: Link2,       action: addLink },
+  const wrapCode = () => {
+    const sel = window.getSelection();
+    const text = sel && !sel.isCollapsed ? sel.toString() : '';
+    if (!text) return;
+    ref.current?.focus();
+    document.execCommand('insertHTML', false, `<code>${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>​`);
+    emit();
+  };
+
+  type Tool = { title: string; icon: React.ElementType; action: () => void } | 'sep';
+  const tools: Tool[] = [
+    { title: 'Undo',          icon: Undo2,        action: () => run('undo') },
+    { title: 'Redo',          icon: Redo2,        action: () => run('redo') },
+    'sep',
+    { title: 'Heading',       icon: Heading2,     action: () => run('formatBlock', 'h2') },
+    { title: 'Sub-heading',   icon: Heading3,     action: () => run('formatBlock', 'h3') },
+    'sep',
+    { title: 'Bold',          icon: Bold,         action: () => run('bold') },
+    { title: 'Italic',        icon: Italic,       action: () => run('italic') },
+    { title: 'Underline',     icon: Underline,    action: () => run('underline') },
+    { title: 'Strikethrough', icon: Strikethrough, action: () => run('strikeThrough') },
+    { title: 'Subscript',     icon: Subscript,    action: () => run('subscript') },
+    { title: 'Superscript',   icon: Superscript,  action: () => run('superscript') },
+    { title: 'Inline code',   icon: Code,         action: wrapCode },
+    'sep',
+    { title: 'Align left',    icon: AlignLeft,    action: () => run('justifyLeft') },
+    { title: 'Align center',  icon: AlignCenter,  action: () => run('justifyCenter') },
+    { title: 'Align right',   icon: AlignRight,   action: () => run('justifyRight') },
+    { title: 'Justify',       icon: AlignJustify, action: () => run('justifyFull') },
+    'sep',
+    { title: 'Bullet list',   icon: List,         action: () => run('insertUnorderedList') },
+    { title: 'Numbered list', icon: ListOrdered,  action: () => run('insertOrderedList') },
+    { title: 'Quote',         icon: Quote,        action: () => run('formatBlock', document.queryCommandValue('formatBlock').toLowerCase() === 'blockquote' ? 'p' : 'blockquote') }, // toggles
+    { title: 'Divider line',  icon: Minus,        action: () => run('insertHorizontalRule') },
+    'sep',
+    { title: 'Link',          icon: Link2,        action: addLink },
+    { title: 'Remove link',   icon: Unlink,       action: () => run('unlink') },
     { title: 'Clear formatting (paragraph)', icon: Eraser, action: () => { run('formatBlock', 'p'); run('removeFormat'); } },
   ];
 
   return (
     <div style={{ border: '1px solid var(--cs-input-border)', borderRadius: '0.5rem', overflow: 'hidden', background: 'var(--cs-input-bg)' }}>
       <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', padding: '0.5rem', borderBottom: '1px solid var(--cs-border)', background: 'rgba(255,255,255,0.02)' }}>
-        {tools.map(t => (
+        {tools.map((t, i) => t === 'sep' ? (
+          <span key={`sep-${i}`} aria-hidden style={{ width: '1px', height: '20px', margin: '6px 4px', background: 'var(--cs-border)' }} />
+        ) : (
           <button key={t.title} type="button" title={t.title} aria-label={t.title}
             onMouseDown={e => e.preventDefault()} onClick={t.action}
             style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid transparent', borderRadius: '0.4rem', color: 'var(--cs-text-2)', cursor: 'pointer' }}
@@ -1039,7 +1082,7 @@ function RichTextEditor({ initialHtml, onChange, placeholder }: { initialHtml: s
           document.execCommand('insertHTML', false, cleanPastedHtml(html));
           emit();
         }}
-        style={{ minHeight: '320px', maxHeight: '52vh', overflowY: 'auto', padding: '1rem 1.125rem', outline: 'none' }}
+        style={{ minHeight, maxHeight: '52vh', overflowY: 'auto', padding: '1rem 1.125rem', outline: 'none' }}
       />
     </div>
   );
@@ -1066,7 +1109,7 @@ function InsightFormModal({ id, onClose, onSave }: {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const plain = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').trim();
+  const plain = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/​/g, '').trim();
 
   const submit = async (status: 'draft' | 'published') => {
     const next: typeof errors = {};

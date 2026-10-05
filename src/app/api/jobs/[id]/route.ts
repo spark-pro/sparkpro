@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { jobs } from '@/lib/schema';
+import { normalizeDescription } from '@/lib/insights';
 import { and, eq } from 'drizzle-orm';
 
 export async function GET(
@@ -20,7 +21,8 @@ export async function GET(
 
     if (!rows.length) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
 
-    return NextResponse.json({ job: rows[0] });
+    // Descriptions are rich-text HTML (sanitized); older plain-text ones are converted to paragraphs.
+    return NextResponse.json({ job: { ...rows[0], description: normalizeDescription(rows[0].description) } });
   } catch (err) {
     console.error('[API] GET /api/jobs/[id]:', err);
     return NextResponse.json({ error: 'Failed to fetch job' }, { status: 500 });
